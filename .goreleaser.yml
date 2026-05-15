@@ -1,54 +1,67 @@
-# Visit https://goreleaser.com for documentation on how to customize this
-# behavior.
+# Goreleaser config for terraform-provider-anypoint
+# Distribution: GitHub Releases (NOT Terraform Registry).
+# Users install manually via `provider_installation` block — see README.
+
+# To re-enable Terraform Registry publishing, uncomment the `signs:` block below
+# and set the GPG_FINGERPRINT env var in CI.
+
 before:
   hooks:
-    # this is just an example and not a requirement for provider building/publishing
     - go mod tidy
+
 builds:
-- env:
-    # goreleaser does not work with CGO, it could also complicate
-    # usage by users in CI/CD systems like Terraform Cloud where
-    # they are unable to install libraries.
-    - CGO_ENABLED=0
-  mod_timestamp: '{{ .CommitTimestamp }}'
-  flags:
-    - -trimpath
-  ldflags:
-    - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
-  goos:
-    - freebsd
-    - windows
-    - linux
-    - darwin
-  goarch:
-    - amd64
-    - '386'
-    - arm
-    - arm64
-  ignore:
-    - goos: darwin
-      goarch: '386'
-  binary: '{{ .ProjectName }}_v{{ .Version }}'
+  - env:
+      # CGO disabled so binaries work in restricted CI envs (Terraform Cloud, etc.)
+      - CGO_ENABLED=0
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - -trimpath
+    ldflags:
+      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+    goarch:
+      - amd64
+      - '386'
+      - arm
+      - arm64
+    ignore:
+      # darwin 386 doesn't exist
+      - goos: darwin
+        goarch: '386'
+    binary: '{{ .ProjectName }}_v{{ .Version }}'
+
 archives:
-- format: zip
-  name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  - format: zip
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256
-signs:
-  - artifacts: checksum
-    args:
-      # if you are using this in a GitHub action or some other automated pipeline, you 
-      # need to pass the batch flag to indicate its not interactive.
-      - "--batch"
-      - "--local-user"
-      - "{{ .Env.GPG_FINGERPRINT }}" # set this environment variable for your signing key
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
+
+# Uncomment the section below if you ever publish to the public Terraform Registry.
+# Requires GPG_FINGERPRINT env var with a key registered at registry.terraform.io.
+#
+# signs:
+#   - artifacts: checksum
+#     args:
+#       - "--batch"
+#       - "--local-user"
+#       - "{{ .Env.GPG_FINGERPRINT }}"
+#       - "--output"
+#       - "${signature}"
+#       - "--detach-sign"
+#       - "${artifact}"
+
 release:
-  # If you want to manually examine the release before its live, uncomment this line:
-  # draft: true
+  # Set to true to manually review the GitHub release before publishing
+  draft: false
+  # Use the CHANGELOG.md section that matches the tag as release notes
+  # (requires the tag matching a `## [X.Y.Z]` heading)
+  prerelease: auto
+
 changelog:
   disable: true

@@ -1,4 +1,4 @@
-resource "anypoint_secretgroup_tlscontext_flexgateway" "fg" {
+resource "anypoint_secretgroup_tlscontext_self_managed_omni_gateway" "fg" {
   org_id = var.root_org
   env_id = var.env_id
   sg_id = var.secretgroup_id

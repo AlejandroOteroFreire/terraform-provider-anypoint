@@ -1,171 +1,309 @@
 # Terraform Provider Anypoint
 
-![badge1](https://img.shields.io/badge/Terraform->=1.0.x-blue)
-![discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)
+![Terraform](https://img.shields.io/badge/terraform->=1.0.x-623CE4?logo=terraform)
+![Go](https://img.shields.io/badge/go-1.20%2B-00ADD8?logo=go)
+![License](https://img.shields.io/badge/license-MPL%202.0-blue)
+![Discord](https://img.shields.io/badge/Discord-join-7289DA?logo=discord&logoColor=white)
 
-## Welcome to the Terraform Anypoint Provider repository
+A community-driven Terraform provider for managing **MuleSoft Anypoint Platform** resources as code.
 
-Are you ready to supercharge your infrastructure as code (IaC) game for MuleSoft's Anypoint Platform? Look no further! The Terraform Anypoint Provider empowers you to manage Anypoint resources seamlessly using Terraform.
+Whether you need to provision Private Spaces, configure API Manager policies, manage Access Management (teams, users, roles), or wire up entire Connected Apps with their scopes — this provider lets you describe it all declaratively.
 
-## What is the Terraform Anypoint Provider?
+> **Note:** this is a **community fork** (mulesoft-anypoint org) with extensions on top of the upstream. It is not an official MuleSoft product. See [Disclaimer](#disclaimer).
 
-**Terraform** is the industry-standard tool for building, changing, and versioning infrastructure efficiently. With Terraform, you can describe your infrastructure as code, apply version control, and automate provisioning and configuration tasks.
+---
 
-**Anypoint Platform** by MuleSoft is a leading integration platform that allows you to connect applications, data, and devices in the cloud and on-premises. It's a powerful tool for API management, integration, and more.
+## Table of Contents
 
-**The Terraform Anypoint Provider** bridges the gap between these two worlds. It enables you to define your Anypoint resources, configurations, and integrations in code, providing you with the ability to automate deployments, enhance collaboration, reduce errors, and track changes with ease.
+- [Why this provider?](#why-this-provider)
+- [Quick Start](#quick-start)
+- [Authentication](#authentication)
+- [Architecture / How it works](#architecture--how-it-works)
+- [Resources by Category](#resources-by-category)
+- [Building from source](#building-from-source)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Disclaimer](#disclaimer)
 
-## What You'll Find Here
+---
 
-In this repository, you'll discover:
+## Why this provider?
 
-* **Provider Code:** The source code for the Terraform Anypoint Provider, which allows you to interact with Anypoint Platform resources in your Terraform configurations.
+- **Full lifecycle**: declarative management of Private Spaces, Cloudhub 1.0/2.0, RTF, API Manager, Anypoint MQ, Secrets Manager, Access Management, Identity Providers, and more
+- **Two auth modes**: standard `client_credentials` for automation, plus `auth_type = "user"` (OAuth2 password grant) for Access Management operations that need elevated permissions
+- **Extra resources** beyond the upstream: full Private Space VPN Connection management (BGP / static, dual-tunnel), AWS Transit Gateway attachments, SLA Tiers, Shared Secrets, Certificate Pinsets, and more
 
-* **Documentation:** Detailed guides, examples, and reference materials to help you get started and make the most of the Terraform Anypoint Provider.
+## Installation
 
-* **Issues and Contributions:** A space to report issues, suggest improvements, and contribute to the development of the provider. We welcome your contributions and feedback!
+This fork is **not published** on the public Terraform Registry. Install it locally from the GitHub Releases page.
 
-## How it works
+### From GitHub Releases (recommended)
 
-This provider uses the anypoint platform APIs to perform actions for each one of the implemented resources.
+1. Download the release archive matching your OS/arch from the [Releases page](https://github.com/AlejandroOteroFreire/terraform-provider-anypoint/releases) — for example:
+   - macOS Apple Silicon: `terraform-provider-anypoint_2.0.0_darwin_arm64.zip`
+   - Linux amd64: `terraform-provider-anypoint_2.0.0_linux_amd64.zip`
+2. (Optional) Verify the checksum:
+   ```bash
+   curl -sL <SHA256SUMS-url> | shasum -c -a 256 --ignore-missing
+   ```
+3. Unzip into Terraform's plugin directory using the expected layout:
+   ```bash
+   VERSION=2.0.0
+   OS_ARCH=darwin_arm64   # adjust for your platform
+   NAMESPACE=AlejandroOteroFreire
+   TARGET="$HOME/.terraform.d/plugins/registry.terraform.io/${NAMESPACE}/anypoint/${VERSION}/${OS_ARCH}"
+
+   mkdir -p "$TARGET"
+   unzip -o terraform-provider-anypoint_${VERSION}_${OS_ARCH}.zip -d "$TARGET"
+   chmod +x "$TARGET/terraform-provider-anypoint_v${VERSION}"
+   ```
+4. Use it in your config:
+   ```hcl
+   terraform {
+     required_providers {
+       anypoint = {
+         source  = "AlejandroOteroFreire/anypoint"
+         version = "2.0.0"
+       }
+     }
+   }
+   ```
+
+### Local development (no install)
+
+Add to your `~/.terraformrc`:
+
+```hcl
+provider_installation {
+  dev_overrides {
+    "AlejandroOteroFreire/anypoint" = "/absolute/path/to/terraform-provider-anypoint-fork"
+  }
+  direct {}
+}
+```
+
+Then run `go build -o terraform-provider-anypoint` inside the fork — Terraform picks up the local binary directly, no `terraform init` needed.
+
+## Quick Start
+
+```hcl
+terraform {
+  required_providers {
+    anypoint = {
+      source  = "AlejandroOteroFreire/anypoint"
+      version = "~> 2.0"
+    }
+  }
+}
+
+provider "anypoint" {
+  client_id     = var.anypoint_client_id      # or ANYPOINT_CLIENT_ID env var
+  client_secret = var.anypoint_client_secret  # or ANYPOINT_CLIENT_SECRET env var
+  cplane        = "us"                        # "us" (default), "eu" or "gov"
+}
+
+# Example: list all Private Spaces in your org
+data "anypoint_private_spaces" "all" {
+  org_id = var.org_id
+}
+
+output "spaces" {
+  value = data.anypoint_private_spaces.all.private_spaces
+}
+```
+
+## Authentication
+
+The provider supports **three** authentication flows. Use the one that matches your scenario.
+
+### 1. Connected App — `auth_type = "connected_app"` (default)
+
+OAuth2 `client_credentials` grant. Best for automation, CI/CD pipelines, and any scenario where the provider acts on its own behalf.
+
+```hcl
+provider "anypoint" {
+  client_id     = var.anypoint_client_id
+  client_secret = var.anypoint_client_secret
+  cplane        = "us"
+  # auth_type defaults to "connected_app"
+}
+```
+
+**Requirements**: a Connected App in your root org with **"App acts on its own behalf"** type and the scopes required for the resources you manage.
+
+### 2. User on behalf — `auth_type = "user"`
+
+OAuth2 password grant. Required for **Access Management** operations (teams, team roles, team members, connected app scopes) — these endpoints don't accept connected-app-only tokens.
+
+```hcl
+provider "anypoint" {
+  alias         = "admin"
+  auth_type     = "user"
+  client_id     = var.anypoint_admin_client_id      # Connected App with "App acts on behalf of a user"
+  client_secret = var.anypoint_admin_client_secret
+  username      = var.anypoint_admin_username       # a service-account user (MFA disabled)
+  password      = var.anypoint_admin_password
+  cplane        = "us"
+}
+
+# Use it explicitly on Access Management resources:
+resource "anypoint_team_roles" "roles" {
+  provider = anypoint.admin
+  # ...
+}
+```
+
+**Requirements**:
+- Connected App of type **"App acts on behalf of a user"** with `Resource Owner Password Credentials` grant enabled
+- A user (service account) with **MFA disabled** — password grant doesn't work with MFA
+- The user must have the roles needed for the operations (typically `Organization Administrator`)
+
+### 3. Pre-signed token
+
+If you already have a bearer token (e.g., from an external auth flow):
+
+```hcl
+provider "anypoint" {
+  access_token = var.anypoint_access_token   # or ANYPOINT_ACCESS_TOKEN env var
+  cplane       = "us"
+}
+```
+
+### Control plane (`cplane`)
+
+| Value | Anypoint Region |
+|-------|-----------------|
+| `us` (default) | `https://anypoint.mulesoft.com` |
+| `eu`           | `https://eu1.anypoint.mulesoft.com` |
+| `gov`          | `https://gov.anypoint.mulesoft.com` |
+
+## Architecture / How it works
+
+The provider is a thin Terraform adapter over a set of generated Go client libraries — one per Anypoint API surface.
 
 ![alt text](drive/imgs/provider-arch.png)
 
-We use the **anypoint client library** as an abstraction layer to perform actions on the platform.
+The Go client (`anypoint-client-go`) is **generated from OpenAPI 3 specifications** that the community contributes via [`anypoint-automation-client-generator`](https://github.com/mulesoft-anypoint/anypoint-automation-client-generator). Each spec ships at least `GET`, `POST` and `DELETE` operations and gets pushed to [`anypoint-client-go`](https://github.com/mulesoft-anypoint/anypoint-client-go).
 
-For better maintainability and in order to speed up the development process, the **anypoint client library** is a library generated from OAS3 specifications written by the community.
+![alt text](drive/imgs/provider-cycle.png)
 
-The following image describes the delivery cycle:
+For new contributions, the cycle is:
+1. Pick an Anypoint resource and reverse-engineer its API (Postman + browser inspector + Anypoint docs)
+2. Write an OpenAPI 3 spec and submit it to the generator repo — a Go module gets generated and published
+3. Implement the resource and matching data sources in this provider using the generated module
 
-![alt text](drive/imgs/provider-deliver.png)
+## Resources by Category
 
-The cycle is composed of 3 steps:
+> See [`docs/resources/`](docs/resources/) and [`docs/data-sources/`](docs/data-sources/) for the full reference of every resource and data source.
 
-  1. Pick one resource and understand how it works using tools like Postman, anypoint's documentation and your favorite browser's inspector.
-  2. Create the OAS3 specification. The specification should at least contain GET, POST and DELETE operations.
-  The specification should be contributed [here](https://github.com/mulesoft-anypoint/anypoint-automation-client-generator). Using the OAS spec, a go module will be generated and pushed [here](https://github.com/mulesoft-anypoint/anypoint-client-go).
+### Access Management
+`anypoint_bg`, `anypoint_env`, `anypoint_user`, `anypoint_team`, `anypoint_team_member`, `anypoint_team_roles`, `anypoint_team_group_mappings`, `anypoint_rolegroup`, `anypoint_rolegroup_roles`, `anypoint_user_rolegroup`, `anypoint_connected_app`, `anypoint_connected_app_scopes`, `anypoint_idp_oidc`, `anypoint_idp_saml`
 
-  ![alt text](drive/imgs/provider-cycle.png)
-  3. Implement the resource and related data sources in the provider using the generated library.
+### CloudHub 2.0 / Private Spaces
+`anypoint_private_space`, `anypoint_private_space_tlscontext_pem`, `anypoint_private_space_tlscontext_jks`, `anypoint_private_space_connection`, `anypoint_private_space_transit_gateway`, `anypoint_private_space_association`, `anypoint_private_space_advanced_config`, `anypoint_cloudhub2_shared_space_deployment`
 
-## Getting Started
+### CloudHub 1.0 / VPC
+`anypoint_vpc`, `anypoint_vpn`, `anypoint_dlb`
 
-### How to use
+### Runtime Fabric
+`anypoint_fabrics`, `anypoint_fabrics_associations`, `anypoint_rtf_deployment`
 
-Run the following command to build the provider
+### API Manager
+`anypoint_apim_mule4`, `anypoint_self_managed_omni_gateway` (formerly `apim_flexgateway`), `anypoint_apim_sla_tier`, `anypoint_apim_policy_basic_auth`, `anypoint_apim_policy_client_id_enforcement`, `anypoint_apim_policy_custom`, `anypoint_apim_policy_jwt_validation`, `anypoint_apim_policy_message_logging`, `anypoint_apim_policy_rate_limiting`
+
+### Anypoint MQ
+`anypoint_amq`, `anypoint_ame`, `anypoint_ame_binding`
+
+### Secrets Manager
+`anypoint_secretgroup`, `anypoint_secretgroup_keystore`, `anypoint_secretgroup_truststore`, `anypoint_secretgroup_certificate`, `anypoint_secretgroup_certificatepinset`, `anypoint_secretgroup_sharedsecret`, `anypoint_secretgroup_crldistrib_cfgs`, `anypoint_secretgroup_tlscontext_mule`, `anypoint_secretgroup_tlscontext_self_managed_omni_gateway` (formerly `secretgroup_tlscontext_flexgateway`), `anypoint_secretgroup_tlscontext_securityfabric`
+
+## Building from source
+
+### Prerequisites
+
+- Go 1.20+
+- Terraform 1.0+
 
 ```bash
 go build -o terraform-provider-anypoint
 ```
 
-**N.B:** As of Go 1.13 make sure that your `GOPRIVATE` environment variable includes `github.com/mulesoft-anypoint`
+If you are pulling private modules:
 
 ```bash
 go env -w GOPRIVATE=github.com/mulesoft-anypoint
 ```
 
-### Test sample configuration
+### Local install for development
 
-First, build and install the provider.
+Use `dev_overrides` in your `~/.terraformrc` to test your local build without publishing:
 
-```bash
-make install
-```
-
-Then, navigate inside the `examples` folder, and update your credentials in `main.tf`.
-Run the following command to initialize the workspace and apply the sample configuration.
-
-```bash
-terraform init && terraform apply
-```
-
-If you prefer to have your credentials in a separate file, create a `params.tfvars.json` file in the `examples` folder. Then add your parameters as shown in the example below:
-
-```json
-{
-  "client_id": "REMPLACE_HERE",
-  "client_secret": "REMPLACE_HERE",
-  "org_id": "REMPLACE_HERE"
+```hcl
+provider_installation {
+  dev_overrides {
+    "mulesoft-anypoint/anypoint" = "/absolute/path/to/terraform-provider-anypoint-fork"
+  }
+  direct {}
 }
 ```
 
-Make sure to add the params file when you apply your terraform configuration as follow:
+With `dev_overrides` you skip `terraform init` — your local binary is picked up directly.
+
+### Run a sample
 
 ```bash
-terraform init && terraform apply -var-file="params.tfvars.json"
-```
-
-### Debugging mode
-
-First build the project using
-
-```bash
-go build
-```
-
-You should have a new file `terraform-provider-anypoint` in the root of the project. To start the provider in debug mode execute the following:
-
-```bash
-dlv exec --headless ./terraform-provider-anypoint -- --debug
-```
-
-Once executed, connect your debugger (whether it's your IDE or the debugger client) to the debugger server. The following is an example of how to start a client debugger:
-
-```bash
-dlv connect 127.0.0.1:51495
-```
-
-Then have your client debugger `continue` execution (check the help for more info) then your provider should print something like:
-
-```bash
-TF_REATTACH_PROVIDERS='{"anypoint.mulesoft.com/automation/anypoint":{"Protocol":"grpc","Pid":69612,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/yc/k0_j_x0945jdthsw7fzw5ysh0000gp/T/plugin598168131"}}}'
-```
-
-Now you can run terraform using the debugger, here's an example:
-
-```bash
-TF_REATTACH_PROVIDERS='{"anypoint.mulesoft.com/automation/anypoint":{"Protocol":"grpc","Pid":69612,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/yc/k0_j_x0945jdthsw7fzw5ysh0000gp/T/plugin598168131"}}}' terraform apply --auto-approve -var-file="params.tfvars.json"
-```
-
-> **N.B:** Make sure that your script uses the source `anypoint.mulesoft.com/automation/anypoint`. Otherwise, it won't work.
-
-#### How to log
-
-Use `log` package to log. Here's an exampe:
-
-```go
-log.Println("[DEBUG] Something happened!")
+cd examples
+# edit variables / credentials in main.tf
+terraform plan
 ```
 
 ## Documentation
 
-You can find the documentation [here](https://github.com/mulesoft-anypoint/terraform-provider-anypoint/blob/master/docs/index.md).
+- Per-resource reference: [`docs/resources/`](docs/resources/)
+- Per-data-source reference: [`docs/data-sources/`](docs/data-sources/)
+- Provider configuration: [`docs/index.md`](docs/index.md)
 
-We use [tfplugindocs](https://github.com/hashicorp/terraform-plugin-docs) to generate the documentation.
+### How docs are organized
 
-## Create Release
+The current docs (per-resource `.md` files) are **handwritten and committed** to `docs/`. The provider-level `docs/index.md` is generated from [`templates/index.md.tmpl`](templates/index.md.tmpl) by [`tfplugindocs`](https://github.com/hashicorp/terraform-plugin-docs) — keep them in sync if you edit one.
 
-Follow [documentation](https://www.terraform.io/docs/registry/providers/publishing.html#using-goreleaser-locally).
+### Regenerating `docs/index.md`
 
-## Join the Community
+```bash
+go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+tfplugindocs generate
+```
 
-We believe in the power of community collaboration. Join our community forum to ask questions, share your experiences, and connect with fellow developers and DevOps enthusiasts using the Terraform Anypoint Provider.
+This (re)generates `docs/index.md` from the template — current per-resource docs are **left untouched** because there are no per-resource templates yet.
 
-### How to contribute
+### Adding a new resource — what to write
 
-You can contribute by:
+When you add a new `resource_*.go` or `data_source_*.go`, also add by hand:
 
-* Testing the tool and letting us know of any problems you encounter.
-* Contributing specifications for resources [here](https://github.com/mulesoft-anypoint/anypoint-automation-client-generator).
-* Contributing code in the provider itself here.
+1. `docs/resources/<name>.md` (or `docs/data-sources/<name>.md`) — follow the format of an existing doc (e.g. [`docs/resources/private_space_association.md`](docs/resources/private_space_association.md)). YAML front-matter + `## Example Usage` + `## Schema` + `## Import`.
+2. `examples/resources/<full_name>/resource.tf` (or `examples/data-sources/<full_name>/data-source.tf`) — a real, working configuration.
+3. `examples/resources/<full_name>/import.sh` if the resource supports import.
+
+> Long-term goal: convert handwritten docs to `templates/{resources,data-sources}/<name>.md.tmpl` so `tfplugindocs generate` can keep the schema sections in sync with the Go code automatically. PRs welcome.
+
+## Contributing
+
+You can help by:
+
+- **Testing** the provider and opening issues for any problem you find
+- Contributing **OpenAPI specs** for new resources [here](https://github.com/mulesoft-anypoint/anypoint-automation-client-generator)
+- Contributing **code** in this provider for new resources/data sources
+
+### Release
+
+Follow the [Terraform Registry publishing guide](https://www.terraform.io/docs/registry/providers/publishing.html#using-goreleaser-locally).
 
 ## Credits
 
-Made with love.
+Built with love by the MuleSoft community.
 
 ## Disclaimer
 
-**This is an [Open Source Software, please review the considerations](LICENSE.md).**
-This is an open source project, it does not form part of the official MuleSoft product stack, and is therefore not included in MuleSoft support SLAs. Issues should be directed to the community, who will try to assist on a best endeavours basis. This application is distributed **as is**.
+**This is [Open Source Software — please review the considerations](LICENSE.md).** This is an open source project. It does not form part of the official MuleSoft product stack and is therefore not included in MuleSoft support SLAs. Issues should be directed to the community, who will try to assist on a best-endeavours basis. This application is distributed **as is**.
 
 Let's automate, simplify, and supercharge your Anypoint deployments with Terraform!

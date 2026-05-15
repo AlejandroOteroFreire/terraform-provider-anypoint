@@ -1,93 +1,111 @@
-*This is a suggested `CONTRIBUTING.md` file template for use by open sourced Salesforce projects. The main goal of this file is to make clear the intents and expectations that end-users may have regarding this project and how/if to engage with it. Adjust as needed (especially look for `{project_slug}` which refers to the org and repo name of your project) and remove this paragraph before committing to your repo.*
+# Contributing
 
-# Contributing Guide For {NAME OF PROJECT}
+Thanks for your interest in contributing to `terraform-provider-anypoint`!
 
-This page lists the operational governance model of this project, as well as the recommendations and requirements for how to best contribute to {PROJECT}. We strive to obey these as best as possible. As always, thanks for contributing – we hope these guidelines make it easier and shed some light on our approach and processes.
+## Development workflow
 
-# Governance Model
-> Pick the most appropriate one
+### Prerequisites
 
-## Community Based
+- Go 1.20+
+- Terraform 1.0+
+- (optional) GitHub CLI (`gh`) for releases
 
-The intent and goal of open sourcing this project is to increase the contributor and user base. The governance model is one where new project leads (`admins`) will be added to the project based on their contributions and efforts, a so-called "do-acracy" or "meritocracy" similar to that used by all Apache Software Foundation projects.
+### Local setup
 
-> or
+```bash
+git clone https://github.com/AlejandroOteroFreire/terraform-provider-anypoint
+cd terraform-provider-anypoint
+go build -o terraform-provider-anypoint
+```
 
-## Salesforce Sponsored
+Configure `~/.terraformrc` to use the local build:
 
-The intent and goal of open sourcing this project is to increase the contributor and user base. However, only Salesforce employees will be given `admin` rights and will be the final arbitrars of what contributions are accepted or not.
+```hcl
+provider_installation {
+  dev_overrides {
+    "AlejandroOteroFreire/anypoint" = "/absolute/path/to/terraform-provider-anypoint"
+  }
+  direct {}
+}
+```
 
-> or
+With `dev_overrides` you can skip `terraform init` — Terraform picks up your local binary directly.
 
-## Published but not supported
+## Adding a new resource
 
-The intent and goal of open sourcing this project is because it may contain useful or interesting code/concepts that we wish to share with the larger open source community. Although occasional work may be done on it, we will not be looking for or soliciting contributions.
+1. Add the Go code:
+   - `anypoint/resource_<name>.go` (CRUD + schema)
+   - `anypoint/data_source_<name>.go` (optional, for read-only data source)
+2. Register it in the corresponding map:
+   - `anypoint/provider_resources.go`
+   - `anypoint/provider_datasources.go`
+3. If the underlying API requires a new Go client module, add it under `../anypoint-client-go-fork/<module>/` and:
+   - Add the module to `go.work`
+   - Add the `require` and `replace` directives in `go.mod`
+   - Add the client to `provider_clients.go`
+4. Write docs by hand (see the [Documentation](#documentation) section below)
+5. Write an example in `examples/resources/<full_name>/`
 
-# Getting started
+## Documentation
 
-Please join the community on {Here list Slack channels, Email lists, Glitter, Discord, etc... links}. Also please make sure to take a look at the project [roadmap](ROADMAP.md) to see where are headed.
+Per-resource docs live in `docs/resources/<name>.md` and `docs/data-sources/<name>.md`. They are **handwritten** — follow the format of existing docs (e.g. [`docs/resources/private_space_association.md`](docs/resources/private_space_association.md)).
 
-# Issues, requests & ideas
+Each doc should contain:
 
-Use GitHub Issues page to submit issues, enhancement requests and discuss ideas.
+- YAML front-matter with `page_title`, `subcategory`, `description`
+- `## Example Usage` section (at least one working example)
+- `## Schema` section listing Required / Optional / Read-Only fields
+- `## Import` section if the resource supports import
 
-### Bug Reports and Fixes
--  If you find a bug, please search for it in the [Issues](https://github.com/{project_slug}/issues), and if it isn't already tracked,
-   [create a new issue](https://github.com/{project_slug}/issues/new). Fill out the "Bug Report" section of the issue template. Even if an Issue is closed, feel free to comment and add details, it will still
-   be reviewed.
--  Issues that have already been identified as a bug (note: able to reproduce) will be labelled `bug`.
--  If you'd like to submit a fix for a bug, [send a Pull Request](#creating_a_pull_request) and mention the Issue number.
-  -  Include tests that isolate the bug and verifies that it was fixed.
+For each resource also add a working `examples/resources/<name>/resource.tf` and `examples/resources/<name>/import.sh` (if import is supported).
 
-### New Features
--  If you'd like to add new functionality to this project, describe the problem you want to solve in a [new Issue](https://github.com/{project_slug}/issues/new).
--  Issues that have been identified as a feature request will be labelled `enhancement`.
--  If you'd like to implement the new feature, please wait for feedback from the project
-   maintainers before spending too much time writing the code. In some cases, `enhancement`s may
-   not align well with the project objectives at the time.
+The provider-level `docs/index.md` is regenerated from [`templates/index.md.tmpl`](templates/index.md.tmpl) via:
 
-### Tests, Documentation, Miscellaneous
--  If you'd like to improve the tests, you want to make the documentation clearer, you have an
-   alternative implementation of something that may have advantages over the way its currently
-   done, or you have any other change, we would be happy to hear about it!
-  -  If its a trivial change, go ahead and [send a Pull Request](#creating_a_pull_request) with the changes you have in mind.
-  -  If not, [open an Issue](https://github.com/{project_slug}/issues/new) to discuss the idea first.
+```bash
+go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+tfplugindocs generate
+```
 
-If you're new to our project and looking for some way to make your first contribution, look for
-Issues labelled `good first contribution`.
+> Long-term goal: convert handwritten resource docs into `templates/{resources,data-sources}/<name>.md.tmpl` files so `tfplugindocs` can keep the `## Schema` section in sync with the Go schema automatically.
 
-# Contribution Checklist
+## Releasing
 
-- [x] Clean, simple, well styled code
-- [x] Commits should be atomic and messages must be descriptive. Related issues should be mentioned by Issue number.
-- [x] Comments
-  - Module-level & function-level comments.
-  - Comments on complex blocks of code or algorithms (include references to sources).
-- [x] Tests
-  - The test suite, if provided, must be complete and pass
-  - Increase code coverage, not versa.
-  - Use any of our testkits that contains a bunch of testing facilities you would need. For example: `import com.salesforce.op.test._` and borrow inspiration from existing tests.
-- [x] Dependencies
-  - Minimize number of dependencies.
-  - Prefer Apache 2.0, BSD3, MIT, ISC and MPL licenses.
-- [x] Reviews
-  - Changes must be approved via peer code review
+This fork distributes binaries via GitHub Releases (not the public Terraform Registry).
 
-# Creating a Pull Request
+### Cutting a release
 
-1. **Ensure the bug/feature was not already reported** by searching on GitHub under Issues.  If none exists, create a new issue so that other contributors can keep track of what you are trying to add/fix and offer suggestions (or let you know if there is already an effort in progress).
-3. **Clone** the forked repo to your machine.
-4. **Create** a new branch to contain your work (e.g. `git br fix-issue-11`)
-4. **Commit** changes to your own branch.
-5. **Push** your work back up to your fork. (e.g. `git push fix-issue-11`)
-6. **Submit** a Pull Request against the `main` branch and refer to the issue(s) you are fixing. Try not to pollute your pull request with unintended changes. Keep it simple and small.
-7. **Sign** the Salesforce CLA (you will be prompted to do so when submitting the Pull Request)
+1. Bump the version in [`CHANGELOG.md`](CHANGELOG.md) under the `[Unreleased]` section. Move the section header to the actual version.
+2. Commit and push to `master`.
+3. Tag and push:
+   ```bash
+   git tag v2.0.0
+   git push origin v2.0.0
+   ```
+4. The [`.github/workflows/release.yml`](.github/workflows/release.yml) workflow runs `goreleaser` and creates a GitHub Release with binaries for:
+   - linux/amd64, linux/386, linux/arm, linux/arm64
+   - darwin/amd64, darwin/arm64
+   - windows/amd64, windows/386
+   - freebsd/amd64, freebsd/386, freebsd/arm, freebsd/arm64
+5. Users install by downloading the zip matching their platform — see the [Installation section in the README](README.md#installation).
 
-> **NOTE**: Be sure to [sync your fork](https://help.github.com/articles/syncing-a-fork/) before making a pull request.
+### Versioning
 
+This project follows [Semantic Versioning](https://semver.org/):
 
-# Code of Conduct
-Please follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+- **MAJOR** — incompatible changes (resource/data-source renames or removals, breaking schema changes)
+- **MINOR** — new resources, data sources, or backward-compatible features
+- **PATCH** — bug fixes only
 
-# License
-By contributing your code, you agree to license your contribution under the terms of our project [LICENSE](LICENSE.txt) and to sign the [Salesforce CLA](https://cla.salesforce.com/sign-cla)
+When in doubt, err on the side of MINOR rather than PATCH.
+
+## Code style
+
+- Standard Go formatting (`go fmt ./...`)
+- Run `go build ./...` before pushing — no broken code on `master`
+- Match the existing style for schema definitions, error handling, and naming
+
+## Issues and PRs
+
+- Open an issue first if you're going to change something significant
+- Keep PRs focused — one feature/fix per PR
+- Always update `CHANGELOG.md` under `[Unreleased]` with your change

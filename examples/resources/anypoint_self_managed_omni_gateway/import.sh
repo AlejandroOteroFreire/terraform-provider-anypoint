@@ -3,5 +3,5 @@
 
 terraform import \
   -var-file params.tfvars.json \    #variables file
-  anypoint_apim_flexgateway.fg \                #resource name
+  anypoint_self_managed_omni_gateway.fg \                #resource name
   aa1f55d6-213d-4f60-845c-201282484cd1/7074fcdd-9b23-4ab6-97r8-5db5f4adf17d/19218070    #resource ID
