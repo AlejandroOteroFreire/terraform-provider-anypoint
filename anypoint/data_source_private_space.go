@@ -325,7 +325,7 @@ func setPrivateSpaceAttributesToResourceData(d *schema.ResourceData, data map[st
 		for _, attr := range attributes {
 			if val, ok := data[attr]; ok {
 				if err := d.Set(attr, val); err != nil {
-					return fmt.Errorf("unable to set flex gateway target attribute %s\n\tdetails: %s", attr, err)
+					return fmt.Errorf("unable to set Self-Managed Omni Gateway target attribute %s\n\tdetails: %s", attr, err)
 				}
 			}
 		}

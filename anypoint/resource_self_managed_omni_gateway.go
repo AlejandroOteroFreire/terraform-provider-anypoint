@@ -19,17 +19,17 @@ import (
 	flexgateway "github.com/mulesoft-anypoint/anypoint-client-go/flexgateway"
 )
 
-const FLEX_GATEWAY_TECHNOLOGY = "flexGateway"
+const FLEX_GATEWAY_TECHNOLOGY = "selfManagedOmniGateway"
 
-func resourceApimFlexGateway() *schema.Resource {
+func resourceApimSelfManagedOmniGateway() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceApimFlexGatewayCreate,
-		ReadContext:   resourceApimFlexGatewayRead,
-		UpdateContext: resourceApimFlexGatewayUpdate,
-		DeleteContext: resourceApimFlexGatewayDelete,
+		CreateContext: resourceApimSelfManagedOmniGatewayCreate,
+		ReadContext:   resourceApimSelfManagedOmniGatewayRead,
+		UpdateContext: resourceApimSelfManagedOmniGatewayUpdate,
+		DeleteContext: resourceApimSelfManagedOmniGatewayDelete,
 		Description: `
-		Create an API Manager Instance of type Flex Gateway.
-		When an API instance of type Flex Gateway is created, it has automatically a default upstream linked to the endpoint_uri and a routing that points to this one.
+		Create an API Manager Instance of type flexgateway.
+		When an API instance of type Self-Managed Omni Gateway is created, it has automatically a default upstream linked to the endpoint_uri and a routing that points to this one.
 		This provider will remove all default routings and upstreams.
 		`,
 		Schema: map[string]*schema.Schema{
@@ -42,7 +42,7 @@ func resourceApimFlexGateway() *schema.Resource {
 			"id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The API Manager Flex Gateway instance id.",
+				Description: "The API Manager Self-Managed Omni Gateway instance id.",
 			},
 			"audit": {
 				Type:        schema.TypeMap,
@@ -58,13 +58,13 @@ func resourceApimFlexGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The organization id where the flex gateway instance is defined.",
+				Description: "The organization id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"env_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The environment id where the flex gateway instance is defined.",
+				Description: "The environment id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"instance_label": {
 				Type:        schema.TypeString,
@@ -138,7 +138,7 @@ func resourceApimFlexGateway() *schema.Resource {
 			"technology": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The type of API Manager instance. Always equals to 'flexGateway'",
+				Description: "The type of API Manager instance. Always equals to 'selfManagedOmniGateway'",
 			},
 			"endpoint_uri": {
 				Type:        schema.TypeString,
@@ -278,13 +278,13 @@ func resourceApimFlexGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The instance's deployment flex gateway target id",
+				Description: "The instance's deployment Self-Managed Omni Gateway target id",
 			},
 			"deployment_target_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The instance's deployment flex gateway target name",
+				Description: "The instance's deployment Self-Managed Omni Gateway target name",
 			},
 			"deployment_updated_date": {
 				Type:        schema.TypeString,
@@ -487,7 +487,7 @@ func resourceApimFlexGateway() *schema.Resource {
 	}
 }
 
-func resourceApimFlexGatewayCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func resourceApimSelfManagedOmniGatewayCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	// init variables
 	var diags diag.Diagnostics
 	pco := m.(ProviderConfOutput)
@@ -495,7 +495,7 @@ func resourceApimFlexGatewayCreate(ctx context.Context, d *schema.ResourceData, 
 	envid := d.Get("env_id").(string)
 	authctx := getApimAuthCtx(ctx, &pco)
 	// init request body
-	body := newApimFlexGatewayPostBody(d)
+	body := newApimSelfManagedOmniGatewayPostBody(d)
 	// execute post request
 	res, httpr, err := pco.apimclient.DefaultApi.PostApimInstance(authctx, orgid, envid).ApimInstancePostBody(*body).Execute()
 	if err != nil {
@@ -509,7 +509,7 @@ func resourceApimFlexGatewayCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 		diags := append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Unable to create API flex gateway for org " + orgid + " and env " + envid,
+			Summary:  "Unable to create API Self-Managed Omni Gateway for org " + orgid + " and env " + envid,
 			Detail:   details,
 		})
 		return diags
@@ -520,19 +520,19 @@ func resourceApimFlexGatewayCreate(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(strconv.Itoa(int(id)))
 
 	//create all upstreams if available
-	diags = append(diags, resourceApimFlexGatewayUpstreamsCreate(ctx, d, m)...)
+	diags = append(diags, resourceApimSelfManagedOmniGatewayUpstreamsCreate(ctx, d, m)...)
 	// updates the routing
-	diags = append(diags, resourceApimFlexGatewayRoutingUpdate(ctx, d, m)...)
-	// removes default upstream that is systematically created along with the api flex gateway instance
-	diags = append(diags, resourceApimFlexGatewayDeleteDefaultUpstream(ctx, d, m)...)
+	diags = append(diags, resourceApimSelfManagedOmniGatewayRoutingUpdate(ctx, d, m)...)
+	// removes default upstream that is systematically created along with the api Self-Managed Omni Gateway instance
+	diags = append(diags, resourceApimSelfManagedOmniGatewayDeleteDefaultUpstream(ctx, d, m)...)
 	//perform read
-	diags = append(diags, resourceApimFlexGatewayRead(ctx, d, m)...)
+	diags = append(diags, resourceApimSelfManagedOmniGatewayRead(ctx, d, m)...)
 
 	return diags
 }
 
-// Create upstreams for the apim flex gateway instance if upstreams is set
-func resourceApimFlexGatewayUpstreamsCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+// Create upstreams for the apim Self-Managed Omni Gateway instance if upstreams is set
+func resourceApimSelfManagedOmniGatewayUpstreamsCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	if input, ok := d.GetOk("upstreams"); ok {
 		pco := m.(ProviderConfOutput)
@@ -540,7 +540,7 @@ func resourceApimFlexGatewayUpstreamsCreate(ctx context.Context, d *schema.Resou
 		envid := d.Get("env_id").(string)
 		id := d.Get("id").(string)
 		authctx := getApimUpstreamAuthCtx(ctx, &pco)
-		bodies := newApimFlexGatewayUpstreamPostBody(input.([]any))
+		bodies := newApimSelfManagedOmniGatewayUpstreamPostBody(input.([]any))
 		// loop over all new upstreams to create them
 		for _, body := range bodies {
 			//execute post upstream
@@ -556,7 +556,7 @@ func resourceApimFlexGatewayUpstreamsCreate(ctx context.Context, d *schema.Resou
 				}
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Unable to create Flex Gateway upstream " + body.GetLabel() + " for instance " + id,
+					Summary:  "Unable to create Self-Managed Omni Gateway upstream " + body.GetLabel() + " for instance " + id,
 					Detail:   details.Error(),
 				})
 				return diags
@@ -568,8 +568,8 @@ func resourceApimFlexGatewayUpstreamsCreate(ctx context.Context, d *schema.Resou
 	return diags
 }
 
-// refresh the state of the flex gateway instance
-func resourceApimFlexGatewayRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+// refresh the state of the Self-Managed Omni Gateway instance
+func resourceApimSelfManagedOmniGatewayRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	pco := m.(ProviderConfOutput)
 	orgid := d.Get("org_id").(string)
@@ -577,7 +577,7 @@ func resourceApimFlexGatewayRead(ctx context.Context, d *schema.ResourceData, m 
 	id := d.Get("id").(string)
 	authctx := getApimAuthCtx(ctx, &pco)
 	if isComposedResourceId(id) {
-		orgid, envid, id, diags = decomposeApimFlexGatewayId(d)
+		orgid, envid, id, diags = decomposeApimSelfManagedOmniGatewayId(d)
 	}
 	if diags.HasError() {
 		return diags
@@ -595,7 +595,7 @@ func resourceApimFlexGatewayRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 		diags := append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Unable to get API manager's flex gateway instance",
+			Summary:  "Unable to get API manager's Self-Managed Omni Gateway instance",
 			Detail:   details,
 		})
 		return diags
@@ -606,10 +606,10 @@ func resourceApimFlexGatewayRead(ctx context.Context, d *schema.ResourceData, m 
 		diags = append(diags, diagsbis...)
 	}
 	details := flattenApimInstanceDetails(res)
-	if err := setApimFlexGatewayAttributesToResourceData(d, details); err != nil {
+	if err := setApimSelfManagedOmniGatewayAttributesToResourceData(d, details); err != nil {
 		diags := append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Unable to set API manager's flex gateway instance details attributes",
+			Summary:  "Unable to set API manager's Self-Managed Omni Gateway instance details attributes",
 			Detail:   err.Error(),
 		})
 		return diags
@@ -622,8 +622,8 @@ func resourceApimFlexGatewayRead(ctx context.Context, d *schema.ResourceData, m 
 	return diags
 }
 
-// updates the whole apim flex gateway in case of changes
-func resourceApimFlexGatewayUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+// updates the whole apim Self-Managed Omni Gateway in case of changes
+func resourceApimSelfManagedOmniGatewayUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	pco := m.(ProviderConfOutput)
 	orgid := d.Get("org_id").(string)
@@ -632,7 +632,7 @@ func resourceApimFlexGatewayUpdate(ctx context.Context, d *schema.ResourceData, 
 	tocreate, toupdate, todelete := calcUpstreamsDiff(d)
 	if len(toupdate) > 0 {
 		authctx := getApimUpstreamAuthCtx(ctx, &pco)
-		bodies := newApimFlexGatewayUpstreamPatchBody(toupdate)
+		bodies := newApimSelfManagedOmniGatewayUpstreamPatchBody(toupdate)
 		for i, body := range bodies {
 			item := toupdate[i].(map[string]any)
 			id := item["id"].(string)
@@ -648,7 +648,7 @@ func resourceApimFlexGatewayUpdate(ctx context.Context, d *schema.ResourceData, 
 				}
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Unable to update Flex Gateway upstream " + id + " for instance " + apimid,
+					Summary:  "Unable to update Self-Managed Omni Gateway upstream " + id + " for instance " + apimid,
 					Detail:   details.Error(),
 				})
 			}
@@ -657,7 +657,7 @@ func resourceApimFlexGatewayUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	if len(tocreate) > 0 && !diags.HasError() {
 		authctx := getApimUpstreamAuthCtx(ctx, &pco)
-		bodies := newApimFlexGatewayUpstreamPostBody(tocreate)
+		bodies := newApimSelfManagedOmniGatewayUpstreamPostBody(tocreate)
 		for _, body := range bodies {
 			_, httpr, err := pco.apimupstreamclient.DefaultApi.PostApimInstanceUpstream(authctx, orgid, envid, apimid).UpstreamPostBody(*body).Execute()
 			if err != nil {
@@ -671,15 +671,15 @@ func resourceApimFlexGatewayUpdate(ctx context.Context, d *schema.ResourceData, 
 				}
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Unable to create Flex Gateway upstream " + body.GetLabel() + " for instance " + apimid,
+					Summary:  "Unable to create Self-Managed Omni Gateway upstream " + body.GetLabel() + " for instance " + apimid,
 					Detail:   details.Error(),
 				})
 			}
 			defer httpr.Body.Close()
 		}
 	}
-	if d.HasChanges(getApimFlexGatewayUpdatableAttributes()...) {
-		body := newApimFlexGatewayPatchBody(d)
+	if d.HasChanges(getApimSelfManagedOmniGatewayUpdatableAttributes()...) {
+		body := newApimSelfManagedOmniGatewayPatchBody(d)
 		authctx := getApimAuthCtx(ctx, &pco)
 		_, httpr, err := pco.apimclient.DefaultApi.PatchApimInstance(authctx, orgid, envid, apimid).Body(body).Execute()
 		if err != nil {
@@ -693,7 +693,7 @@ func resourceApimFlexGatewayUpdate(ctx context.Context, d *schema.ResourceData, 
 			}
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Unable to update Flex Gateway instance " + apimid,
+				Summary:  "Unable to update Self-Managed Omni Gateway instance " + apimid,
 				Detail:   details.Error(),
 			})
 		}
@@ -716,19 +716,19 @@ func resourceApimFlexGatewayUpdate(ctx context.Context, d *schema.ResourceData, 
 				}
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Unable to remove Flex Gateway upstream " + id + " for instance " + apimid,
+					Summary:  "Unable to remove Self-Managed Omni Gateway upstream " + id + " for instance " + apimid,
 					Detail:   details.Error(),
 				})
 			}
 			defer httpr.Body.Close()
 		}
 	}
-	diags = append(diags, resourceApimFlexGatewayRead(ctx, d, m)...)
+	diags = append(diags, resourceApimSelfManagedOmniGatewayRead(ctx, d, m)...)
 	return diags
 }
 
-// Updates the routing only for the apim flex gateway
-func resourceApimFlexGatewayRoutingUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+// Updates the routing only for the apim Self-Managed Omni Gateway
+func resourceApimSelfManagedOmniGatewayRoutingUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	pco := m.(ProviderConfOutput)
 	orgid := d.Get("org_id").(string)
@@ -737,7 +737,7 @@ func resourceApimFlexGatewayRoutingUpdate(ctx context.Context, d *schema.Resourc
 	authctx := getApimAuthCtx(ctx, &pco)
 
 	if _, ok := d.GetOk("routing"); ok {
-		body := newApimFlexGatewayRoutingPostBody(d) // creating body
+		body := newApimSelfManagedOmniGatewayRoutingPostBody(d) // creating body
 		// patch
 		_, httpr, err := pco.apimclient.DefaultApi.PatchApimInstance(authctx, orgid, envid, id).Body(body).Execute()
 		if err != nil {
@@ -750,21 +750,21 @@ func resourceApimFlexGatewayRoutingUpdate(ctx context.Context, d *schema.Resourc
 			}
 			diags := append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "unable to update api manager's flex gateway instance " + id + " with routing parameters ",
+				Summary:  "unable to update api manager's Self-Managed Omni Gateway instance " + id + " with routing parameters ",
 				Detail:   details,
 			})
 			return diags
 		}
 		defer httpr.Body.Close()
 		d.Set("last_updated", time.Now().Format(time.RFC850))
-		return resourceApimFlexGatewayRead(ctx, d, m)
+		return resourceApimSelfManagedOmniGatewayRead(ctx, d, m)
 	}
 
 	return diags
 }
 
-// deletes the apim flex gateway
-func resourceApimFlexGatewayDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+// deletes the apim Self-Managed Omni Gateway
+func resourceApimSelfManagedOmniGatewayDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	pco := m.(ProviderConfOutput)
 	orgid := d.Get("org_id").(string)
@@ -783,7 +783,7 @@ func resourceApimFlexGatewayDelete(ctx context.Context, d *schema.ResourceData, 
 		}
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Unable to Delete API Manager's Flex Gateway Instance",
+			Summary:  "Unable to Delete API Manager's Self-Managed Omni Gateway Instance",
 			Detail:   details,
 		})
 		return diags
@@ -796,9 +796,9 @@ func resourceApimFlexGatewayDelete(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-// removes the default upstream that is created upon the creation of a flex gateway instance. it has an empty label.
+// removes the default upstream that is created upon the creation of a Self-Managed Omni Gateway instance. it has an empty label.
 // the list of upstreams should be updated before calling this function
-func resourceApimFlexGatewayDeleteDefaultUpstream(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func resourceApimSelfManagedOmniGatewayDeleteDefaultUpstream(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	if upstreams, ok := d.GetOk("upstreams"); ok {
 		filtered := FilterMapList(upstreams.([]any), func(m map[string]any) bool { return len(m["label"].(string)) == 0 })
@@ -821,7 +821,7 @@ func resourceApimFlexGatewayDeleteDefaultUpstream(ctx context.Context, d *schema
 				}
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Unable to delete API flex gateway's upstream " + id + " for instance " + apimid,
+					Summary:  "Unable to delete API Self-Managed Omni Gateway's upstream " + id + " for instance " + apimid,
 					Detail:   details.Error(),
 				})
 				return diags
@@ -833,12 +833,12 @@ func resourceApimFlexGatewayDeleteDefaultUpstream(ctx context.Context, d *schema
 	return diags
 }
 
-func newApimFlexGatewayPostBody(d *schema.ResourceData) *apim.ApimInstancePostBody {
+func newApimSelfManagedOmniGatewayPostBody(d *schema.ResourceData) *apim.ApimInstancePostBody {
 	body := apim.NewApimInstancePostBody()
-	endpoint := newApimFlexGatewayEndpointPostBody(d)
-	deployment := newApimFlexGatewayDeploymentPostBody(d)
-	spec := newApimFlexGatewaySpecPostBody(d)
-	//routing := newApimFlexGatewayRoutingPostBody(d)
+	endpoint := newApimSelfManagedOmniGatewayEndpointPostBody(d)
+	deployment := newApimSelfManagedOmniGatewayDeploymentPostBody(d)
+	spec := newApimSelfManagedOmniGatewaySpecPostBody(d)
+	//routing := newApimSelfManagedOmniGatewayRoutingPostBody(d)
 
 	if val, ok := d.GetOk("instance_label"); ok {
 		body.SetInstanceLabel(val.(string))
@@ -854,7 +854,7 @@ func newApimFlexGatewayPostBody(d *schema.ResourceData) *apim.ApimInstancePostBo
 	return body
 }
 
-func newApimFlexGatewayEndpointPostBody(d *schema.ResourceData) *apim.EndpointPostBody {
+func newApimSelfManagedOmniGatewayEndpointPostBody(d *schema.ResourceData) *apim.EndpointPostBody {
 	body := apim.NewEndpointPostBody()
 
 	body.SetIsCloudHubNil()
@@ -875,7 +875,7 @@ func newApimFlexGatewayEndpointPostBody(d *schema.ResourceData) *apim.EndpointPo
 		body.SetDeploymentType(val.(string))
 	}
 	if _, ok := d.GetOk("endpoint_tls_inbound_context"); ok {
-		tlscontext := newApimFlexGatewayEndpointTlsContextPostBody(d)
+		tlscontext := newApimSelfManagedOmniGatewayEndpointTlsContextPostBody(d)
 		body.SetTlsContexts(*tlscontext)
 	} else {
 		body.SetTlsContextsNil()
@@ -884,7 +884,7 @@ func newApimFlexGatewayEndpointPostBody(d *schema.ResourceData) *apim.EndpointPo
 	return body
 }
 
-func newApimFlexGatewayEndpointTlsContextPostBody(d *schema.ResourceData) *apim.EndpointPostBodyTlsContexts {
+func newApimSelfManagedOmniGatewayEndpointTlsContextPostBody(d *schema.ResourceData) *apim.EndpointPostBodyTlsContexts {
 	body := apim.NewEndpointPostBodyTlsContexts()
 
 	if val, ok := d.GetOk("endpoint_tls_inbound_context"); ok {
@@ -910,7 +910,7 @@ func newApimFlexGatewayEndpointTlsContextPostBody(d *schema.ResourceData) *apim.
 	return body
 }
 
-func newApimFlexGatewayDeploymentPostBody(d *schema.ResourceData) *apim.DeploymentPostBody {
+func newApimSelfManagedOmniGatewayDeploymentPostBody(d *schema.ResourceData) *apim.DeploymentPostBody {
 	body := apim.NewDeploymentPostBody()
 
 	if val, ok := d.GetOk("deployment_target_id"); ok {
@@ -933,7 +933,7 @@ func newApimFlexGatewayDeploymentPostBody(d *schema.ResourceData) *apim.Deployme
 	return body
 }
 
-func newApimFlexGatewaySpecPostBody(d *schema.ResourceData) *apim.Spec {
+func newApimSelfManagedOmniGatewaySpecPostBody(d *schema.ResourceData) *apim.Spec {
 	body := apim.NewSpec()
 
 	if val, ok := d.GetOk("asset_group_id"); ok {
@@ -949,7 +949,7 @@ func newApimFlexGatewaySpecPostBody(d *schema.ResourceData) *apim.Spec {
 	return body
 }
 
-func newApimFlexGatewayRoutingPostBody(d *schema.ResourceData) map[string]any {
+func newApimSelfManagedOmniGatewayRoutingPostBody(d *schema.ResourceData) map[string]any {
 	upstreams_data := d.Get("upstreams").([]any)
 	body := make(map[string]any)
 	if routings, ok := d.GetOk("routing"); ok {
@@ -983,7 +983,7 @@ func newApimFlexGatewayRoutingPostBody(d *schema.ResourceData) map[string]any {
 				routing_output["upstreams"] = upstreams_output
 			}
 			if val, ok := routing_input["rules"]; ok && val != nil {
-				rules := newApimFlexGatewayRoutingRulesPostBody(val.(*schema.Set))
+				rules := newApimSelfManagedOmniGatewayRoutingRulesPostBody(val.(*schema.Set))
 				if len(rules) > 0 {
 					routing_output["rules"] = rules
 				}
@@ -995,7 +995,7 @@ func newApimFlexGatewayRoutingPostBody(d *schema.ResourceData) map[string]any {
 	return body
 }
 
-func newApimFlexGatewayRoutingRulesPostBody(rules *schema.Set) map[string]any {
+func newApimSelfManagedOmniGatewayRoutingRulesPostBody(rules *schema.Set) map[string]any {
 	body := make(map[string]any)
 	if rules.Len() > 0 {
 		rules_list := rules.List()
@@ -1017,7 +1017,7 @@ func newApimFlexGatewayRoutingRulesPostBody(rules *schema.Set) map[string]any {
 	return body
 }
 
-func newApimFlexGatewayUpstreamPostBody(upstreams []any) []*apim_upstream.UpstreamPostBody {
+func newApimSelfManagedOmniGatewayUpstreamPostBody(upstreams []any) []*apim_upstream.UpstreamPostBody {
 	length := len(upstreams)
 	if length == 0 {
 		return []*apim_upstream.UpstreamPostBody{}
@@ -1056,13 +1056,13 @@ func newApimFlexGatewayUpstreamPostBody(upstreams []any) []*apim_upstream.Upstre
 }
 
 // creates patch body depending on the changes occured on the updatable attributes
-func newApimFlexGatewayPatchBody(d *schema.ResourceData) map[string]any {
+func newApimSelfManagedOmniGatewayPatchBody(d *schema.ResourceData) map[string]any {
 	body := make(map[string]any)
-	deployment := newApimFlexGatewayDeploymentPostBody(d)
+	deployment := newApimSelfManagedOmniGatewayDeploymentPostBody(d)
 	deployment_map, _ := deployment.ToMap()
-	endpoint := newApimFlexGatewayEndpointPostBody(d)
+	endpoint := newApimSelfManagedOmniGatewayEndpointPostBody(d)
 	endpoint_map, _ := endpoint.ToMap()
-	attributes := FilterStrList(getApimFlexGatewayUpdatableAttributes(), func(s string) bool {
+	attributes := FilterStrList(getApimSelfManagedOmniGatewayUpdatableAttributes(), func(s string) bool {
 		return !strings.HasPrefix(s, "endpoint") && !strings.HasPrefix(s, "deployment") && s != "routing" && s != "upstreams"
 	})
 	for _, attr := range attributes {
@@ -1075,14 +1075,14 @@ func newApimFlexGatewayPatchBody(d *schema.ResourceData) map[string]any {
 	//maps.Copy(body, newPatchBodyMap4FlattenedAttr("deployment", d))
 	body["endpoint"] = endpoint_map
 	body["deployment"] = deployment_map
-	maps.Copy(body, newApimFlexGatewayRoutingPatchBody(d))
+	maps.Copy(body, newApimSelfManagedOmniGatewayRoutingPatchBody(d))
 	return body
 }
 
 // returns a routing patch body depending on if there's changes
-func newApimFlexGatewayRoutingPatchBody(d *schema.ResourceData) map[string]any {
+func newApimSelfManagedOmniGatewayRoutingPatchBody(d *schema.ResourceData) map[string]any {
 	if d.HasChange("routing") {
-		return newApimFlexGatewayRoutingPostBody(d)
+		return newApimSelfManagedOmniGatewayRoutingPostBody(d)
 	}
 	return map[string]any{}
 }
@@ -1094,7 +1094,7 @@ func newApimFlexGatewayRoutingPatchBody(d *schema.ResourceData) map[string]any {
 func newPatchBodyMap4FlattenedAttr(prefix string, d *schema.ResourceData) map[string]any {
 	separator := "_"
 	params := make(map[string]any)
-	attributes := FilterStrList(getApimFlexGatewayUpdatableAttributes(), func(s string) bool {
+	attributes := FilterStrList(getApimSelfManagedOmniGatewayUpdatableAttributes(), func(s string) bool {
 		return strings.HasPrefix(s, prefix)
 	})
 	for _, attr := range attributes {
@@ -1110,7 +1110,7 @@ func newPatchBodyMap4FlattenedAttr(prefix string, d *schema.ResourceData) map[st
 	return body
 }
 
-func newApimFlexGatewayUpstreamPatchBody(upstreams []any) []*apim_upstream.UpstreamPatchBody {
+func newApimSelfManagedOmniGatewayUpstreamPatchBody(upstreams []any) []*apim_upstream.UpstreamPatchBody {
 	if len(upstreams) == 0 {
 		return []*apim_upstream.UpstreamPatchBody{}
 	}
@@ -1146,13 +1146,13 @@ func newApimFlexGatewayUpstreamPatchBody(upstreams []any) []*apim_upstream.Upstr
 	return bodies
 }
 
-func decomposeApimFlexGatewayId(d *schema.ResourceData) (string, string, string, diag.Diagnostics) {
+func decomposeApimSelfManagedOmniGatewayId(d *schema.ResourceData) (string, string, string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	s := DecomposeResourceId(d.Id())
 	if len(s) != 3 {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Invalid APIM Flex Gateway ID format",
+			Summary:  "Invalid APIM Self-Managed Omni Gateway ID format",
 			Detail:   fmt.Sprintf("Expected ORG_ID/ENV_ID/INSTANCE_ID, got %s", d.Id()),
 		})
 		return "", "", "", diags
@@ -1160,7 +1160,7 @@ func decomposeApimFlexGatewayId(d *schema.ResourceData) (string, string, string,
 	return s[0], s[1], s[2], diags
 }
 
-func setApimFlexGatewayAttributesToResourceData(d *schema.ResourceData, data map[string]any) error {
+func setApimSelfManagedOmniGatewayAttributesToResourceData(d *schema.ResourceData, data map[string]any) error {
 	attributes := getApimInstanceDetailsAttributes()
 	if data != nil {
 		for _, attr := range attributes {
@@ -1171,7 +1171,7 @@ func setApimFlexGatewayAttributesToResourceData(d *schema.ResourceData, data map
 						return err
 					}
 					if err := d.Set(attr, result); err != nil {
-						return fmt.Errorf("unable to set flex gateway instance attribute %s\n details: %s", attr, err)
+						return fmt.Errorf("unable to set Self-Managed Omni Gateway instance attribute %s\n details: %s", attr, err)
 					}
 					continue
 				}
@@ -1261,7 +1261,7 @@ func validateRoutingUpstreams(d *schema.ResourceDiff) error {
 	return nil
 }
 
-func getApimFlexGatewayUpdatableAttributes() []string {
+func getApimSelfManagedOmniGatewayUpdatableAttributes() []string {
 	attributes := [...]string{
 		"instance_label", "description", "tags", "provider_id",
 		"deprecated", "endpoint_proxy_uri",
@@ -1360,7 +1360,7 @@ func isUpstreamTlsContextEqual(a *schema.Set, b *schema.Set) bool {
 /*
  * Returns authentication context (includes authorization header)
  */
-func getFlexGatewayAuthCtx(ctx context.Context, pco *ProviderConfOutput) context.Context {
+func getSelfManagedOmniGatewayAuthCtx(ctx context.Context, pco *ProviderConfOutput) context.Context {
 	tmp := context.WithValue(ctx, flexgateway.ContextAccessToken, pco.access_token)
 	return context.WithValue(tmp, flexgateway.ContextServerIndex, pco.server_index)
 }

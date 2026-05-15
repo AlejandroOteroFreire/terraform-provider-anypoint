@@ -233,7 +233,7 @@ func resourceApimMule4Create(ctx context.Context, d *schema.ResourceData, m any)
 	return diags
 }
 
-// refresh the state of the flex gateway instance
+// refresh the state of the Self-Managed Omni Gateway instance
 func resourceApimMule4Read(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	pco := m.(ProviderConfOutput)
@@ -353,8 +353,8 @@ func resourceApimMule4Delete(ctx context.Context, d *schema.ResourceData, m any)
 
 func newApimMule4PostBody(d *schema.ResourceData) *apim.ApimInstancePostBody {
 	body := apim.NewApimInstancePostBody()
-	endpoint := newApimFlexGatewayEndpointPostBody(d)
-	spec := newApimFlexGatewaySpecPostBody(d)
+	endpoint := newApimSelfManagedOmniGatewayEndpointPostBody(d)
+	spec := newApimSelfManagedOmniGatewaySpecPostBody(d)
 
 	if val, ok := d.GetOk("instance_label"); ok {
 		body.SetInstanceLabel(val.(string))

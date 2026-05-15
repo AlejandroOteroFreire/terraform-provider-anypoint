@@ -28,12 +28,12 @@ func dataSourceApimInstance() *schema.Resource {
 			"org_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The organization id where the flex gateway instance is defined.",
+				Description: "The organization id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"env_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The environment id where the flex gateway instance is defined.",
+				Description: "The environment id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"audit": {
 				Type:        schema.TypeMap,
@@ -239,12 +239,12 @@ func dataSourceApimInstance() *schema.Resource {
 			"deployment_target_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The instance's deployment flex gateway target id",
+				Description: "The instance's deployment Self-Managed Omni Gateway target id",
 			},
 			"deployment_target_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The instance's deployment flex gateway target name",
+				Description: "The instance's deployment Self-Managed Omni Gateway target name",
 			},
 			"deployment_updated_date": {
 				Type:        schema.TypeString,
@@ -457,7 +457,7 @@ func readApimInstanceUpstreamsOnly(ctx context.Context, d *schema.ResourceData, 
 	envid := d.Get("env_id").(string)
 	id := d.Get("id").(string)
 	if isComposedResourceId(id) {
-		orgid, envid, id, diags = decomposeApimFlexGatewayId(d)
+		orgid, envid, id, diags = decomposeApimSelfManagedOmniGatewayId(d)
 	}
 	if diags.HasError() {
 		return diags

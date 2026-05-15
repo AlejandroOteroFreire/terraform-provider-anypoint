@@ -79,3 +79,6 @@ terraform-provider-anypoint
 
 #Windsurf rules
 .windsurfrules
+# Local test files con credenciales reales — NO subir
+main.tf
+*.local.tf

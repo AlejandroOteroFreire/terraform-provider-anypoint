@@ -21,8 +21,10 @@ import (
 	rtf "github.com/mulesoft-anypoint/anypoint-client-go/rtf"
 	secretgroup "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup"
 	secretgroup_certificate "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificate"
+	secretgroup_certificatepinset "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificatepinset"
 	secretgroup_crl_distributor_configs "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_crl_distributor_configs"
 	secretgroup_keystore "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_keystore"
+	secretgroup_sharedsecret "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_sharedsecret"
 	secretgroup_tlscontext "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_tlscontext"
 	secretgroup_truststore "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_truststore"
 	team "github.com/mulesoft-anypoint/anypoint-client-go/team"
@@ -64,6 +66,8 @@ type ProviderConfOutput struct {
 	sgkeystoreclient             *secretgroup_keystore.APIClient
 	sgtruststoreclient           *secretgroup_truststore.APIClient
 	sgcertificateclient          *secretgroup_certificate.APIClient
+	sgsharedsecretclient         *secretgroup_sharedsecret.APIClient
+	sgcertificatepinsetclient    *secretgroup_certificatepinset.APIClient
 	sgtlscontextclient           *secretgroup_tlscontext.APIClient
 	sgcrldistribcfgsclient       *secretgroup_crl_distributor_configs.APIClient
 	rtfclient                    *rtf.APIClient
@@ -100,6 +104,8 @@ func newProviderConfOutput(access_token string, server_index int) ProviderConfOu
 	sgkeystorecfg := secretgroup_keystore.NewConfiguration()
 	sgtruststorecfg := secretgroup_truststore.NewConfiguration()
 	sgcertificatecfg := secretgroup_certificate.NewConfiguration()
+	sgsharedsecretcfg := secretgroup_sharedsecret.NewConfiguration()
+	sgcertificatepinsetcfg := secretgroup_certificatepinset.NewConfiguration()
 	sgtlscontextcfg := secretgroup_tlscontext.NewConfiguration()
 	sgcrldistribcfgs_cfg := secretgroup_crl_distributor_configs.NewConfiguration()
 	rtf_cfg := rtf.NewConfiguration()
@@ -133,6 +139,8 @@ func newProviderConfOutput(access_token string, server_index int) ProviderConfOu
 	sgkeystoreclient := secretgroup_keystore.NewAPIClient(sgkeystorecfg)
 	sgtruststoreclient := secretgroup_truststore.NewAPIClient(sgtruststorecfg)
 	sgcertificateclient := secretgroup_certificate.NewAPIClient(sgcertificatecfg)
+	sgsharedsecretclient := secretgroup_sharedsecret.NewAPIClient(sgsharedsecretcfg)
+	sgcertificatepinsetclient := secretgroup_certificatepinset.NewAPIClient(sgcertificatepinsetcfg)
 	sgtlscontextclient := secretgroup_tlscontext.NewAPIClient(sgtlscontextcfg)
 	sgcrldistribcfgsclient := secretgroup_crl_distributor_configs.NewAPIClient(sgcrldistribcfgs_cfg)
 	rtfclient := rtf.NewAPIClient(rtf_cfg)
@@ -170,6 +178,8 @@ func newProviderConfOutput(access_token string, server_index int) ProviderConfOu
 		sgkeystoreclient:             sgkeystoreclient,
 		sgtruststoreclient:           sgtruststoreclient,
 		sgcertificateclient:          sgcertificateclient,
+		sgsharedsecretclient:         sgsharedsecretclient,
+		sgcertificatepinsetclient:    sgcertificatepinsetclient,
 		sgtlscontextclient:           sgtlscontextclient,
 		sgcrldistribcfgsclient:       sgcrldistribcfgsclient,
 		rtfclient:                    rtfclient,

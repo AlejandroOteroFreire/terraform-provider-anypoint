@@ -12,7 +12,7 @@ import (
 	secretgroup_tlscontext "github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_tlscontext"
 )
 
-var SG_TLS_CONTEXT_FG_TARGET = "FlexGateway"
+var SG_TLS_CONTEXT_FG_TARGET = "SelfManagedOmniGateway"
 
 func resourceSecretGroupTlsContextFG() *schema.Resource {
 	return &schema.Resource{
@@ -21,7 +21,7 @@ func resourceSecretGroupTlsContextFG() *schema.Resource {
 		UpdateContext: resourceSecretGroupTlsContextFGUpdate,
 		DeleteContext: resourceSecretGroupTlsContextFGDelete,
 		Description: `
-		Create and Manage tls-context of type "FlexGateway" for a secret-group in a given organization and environment.
+		Create and Manage tls-context of type "SelfManagedOmniGateway" for a secret-group in a given organization and environment.
 		This resource doesn't support delete. The delete operation only removes the resource from local terraform state file.
 		Only the parent resource (secret-group) can be deleted.
 		`,
@@ -262,15 +262,15 @@ func resourceSecretGroupTlsContextFGRead(ctx context.Context, d *schema.Resource
 	}
 	defer httpr.Body.Close()
 	//process result
-	if !isSgTlsContextFlexGateway(res) {
+	if !isSgTlsContextSelfManagedOmniGateway(res) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "Wrong target type for tls-context " + id,
-			Detail:   "source is not of type FlexGateway",
+			Detail:   "source is not of type SelfManagedOmniGateway",
 		})
 		return diags
 	}
-	data := flattenSgTlsContextFlexGateway(res)
+	data := flattenSgTlsContextSelfManagedOmniGateway(res)
 	if err := setSgTlsContextFGAttributesToResourceData(d, data); err != nil {
 		diags := append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -412,7 +412,7 @@ func decomposeSgTlsContextFGId(d *schema.ResourceData) (string, string, string, 
 	if len(s) != 4 {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Invalid Secret Group TLS Context FlexGateway ID format",
+			Summary:  "Invalid Secret Group TLS Context SelfManagedOmniGateway ID format",
 			Detail:   fmt.Sprintf("Expected ORG_ID/ENV_ID/SG_ID/ID, got %s", d.Id()),
 		})
 		return "", "", "", "", diags

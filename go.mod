@@ -26,8 +26,10 @@ require (
 	github.com/mulesoft-anypoint/anypoint-client-go/rtf v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificate v0.1.0
+	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificatepinset v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_crl_distributor_configs v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_keystore v0.1.0
+	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_sharedsecret v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_tlscontext v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_truststore v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/team v1.0.1
@@ -82,3 +84,9 @@ require (
 	google.golang.org/grpc v1.48.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
+
+replace github.com/mulesoft-anypoint/anypoint-client-go => /Users/alejandrooterofreire/Java/git/EpiData/Terraform/anypoint-client-go-fork
+
+replace github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_sharedsecret => /Users/alejandrooterofreire/Java/git/EpiData/Terraform/anypoint-client-go-fork/secretgroup_sharedsecret
+
+replace github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificatepinset => /Users/alejandrooterofreire/Java/git/EpiData/Terraform/anypoint-client-go-fork/secretgroup_certificatepinset

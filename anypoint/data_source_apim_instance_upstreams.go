@@ -27,12 +27,12 @@ func dataSourceApimInstanceUpstreams() *schema.Resource {
 			"org_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The organization id where the flex gateway instance is defined.",
+				Description: "The organization id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"env_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The environment id where the flex gateway instance is defined.",
+				Description: "The environment id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"upstreams": {
 				Type:        schema.TypeList,

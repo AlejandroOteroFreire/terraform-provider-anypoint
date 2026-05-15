@@ -10,38 +10,38 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceFlexGatewayRegistrationToken() *schema.Resource {
+func dataSourceSelfManagedOmniGatewayRegistrationToken() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceFlexGatewayRegistrationTokenRead,
+		ReadContext: dataSourceSelfManagedOmniGatewayRegistrationTokenRead,
 		Description: `
-		Retrieve a flex gateway registration token used to register a new flex gateway instance.
+		Retrieve a Self-Managed Omni Gateway registration token used to register a new Self-Managed Omni Gateway instance.
 		`,
 		Schema: map[string]*schema.Schema{
 			"org_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The organization id where the flex gateway targets are defined.",
+				Description: "The organization id where the Self-Managed Omni Gateway targets are defined.",
 			},
 			"env_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The environment id where the flex gateway targets are defined.",
+				Description: "The environment id where the Self-Managed Omni Gateway targets are defined.",
 			},
 			"registration_token": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The registration token that can be used to register a new flex gateway",
+				Description: "The registration token that can be used to register a new Self-Managed Omni Gateway",
 			},
 		},
 	}
 }
 
-func dataSourceFlexGatewayRegistrationTokenRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func dataSourceSelfManagedOmniGatewayRegistrationTokenRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	pco := m.(ProviderConfOutput)
 	orgid := d.Get("org_id").(string)
 	envid := d.Get("env_id").(string)
-	authctx := getFlexGatewayAuthCtx(ctx, &pco)
+	authctx := getSelfManagedOmniGatewayAuthCtx(ctx, &pco)
 	//perform request
 	res, httpr, err := pco.flexgatewayclient.DefaultApi.GetFlexGatewayRegistrationToken(authctx, orgid, envid).Execute()
 	if err != nil {
@@ -55,7 +55,7 @@ func dataSourceFlexGatewayRegistrationTokenRead(ctx context.Context, d *schema.R
 		}
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Unable to get flex gateway registration token ",
+			Summary:  "Unable to get Self-Managed Omni Gateway registration token ",
 			Detail:   details,
 		})
 		return diags

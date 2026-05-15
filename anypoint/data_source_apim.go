@@ -23,12 +23,12 @@ func dataSourceApim() *schema.Resource {
 			"org_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The organization id where the flex gateway instance is defined.",
+				Description: "The organization id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"env_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The environment id where the flex gateway instance is defined.",
+				Description: "The environment id where the Self-Managed Omni Gateway instance is defined.",
 			},
 			"params": {
 				Type:        schema.TypeSet,
@@ -280,7 +280,7 @@ func dataSourceApim() *schema.Resource {
 									"deployment_target_id": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The api manager instance's deployment flex gateway target id",
+										Description: "The api manager instance's deployment Self-Managed Omni Gateway target id",
 									},
 									"deployment_expected_status": {
 										Type:        schema.TypeString,

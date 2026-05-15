@@ -15,7 +15,7 @@ func dataSourceSecretGroupTlsContextFG() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceSecretGroupTlsContextFGRead,
 		Description: `
-		Query a specific tls-context of type "FlexGateway" for a secret-group in a given organization and environment.
+		Query a specific tls-context of type "SelfManagedOmniGateway" for a secret-group in a given organization and environment.
 		`,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -154,15 +154,15 @@ func dataSourceSecretGroupTlsContextFGRead(ctx context.Context, d *schema.Resour
 	}
 	defer httpr.Body.Close()
 	//process result
-	if !isSgTlsContextFlexGateway(res) {
+	if !isSgTlsContextSelfManagedOmniGateway(res) {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "Wrong target type for tls-context " + id,
-			Detail:   "source is not of type FlexGateway",
+			Detail:   "source is not of type SelfManagedOmniGateway",
 		})
 		return diags
 	}
-	data := flattenSgTlsContextFlexGateway(res)
+	data := flattenSgTlsContextSelfManagedOmniGateway(res)
 	if err := setSgTlsContextFGAttributesToResourceData(d, data); err != nil {
 		diags := append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -176,7 +176,7 @@ func dataSourceSecretGroupTlsContextFGRead(ctx context.Context, d *schema.Resour
 	return diags
 }
 
-func flattenSgTlsContextFlexGateway(fg *secretgroup_tlscontext.TlsContextDetails) map[string]any {
+func flattenSgTlsContextSelfManagedOmniGateway(fg *secretgroup_tlscontext.TlsContextDetails) map[string]any {
 	item := make(map[string]any)
 	if meta, ok := fg.GetMetaOk(); ok {
 		maps.Copy(item, flattenSgTlsContextMeta(meta))
@@ -209,15 +209,15 @@ func flattenSgTlsContextFlexGateway(fg *secretgroup_tlscontext.TlsContextDetails
 		item["alpn_protocols"] = val
 	}
 	if val, ok := fg.GetInboundSettingsOk(); ok {
-		item["inbound_settings"] = []any{flattenSgTlsContextFlexGatewayInboundSetting(val)}
+		item["inbound_settings"] = []any{flattenSgTlsContextSelfManagedOmniGatewayInboundSetting(val)}
 	}
 	if val, ok := fg.GetOutboundSettingsOk(); ok {
-		item["outbound_settings"] = []any{flattenSgTlsContextFlexGatewayOutboundSetting(val)}
+		item["outbound_settings"] = []any{flattenSgTlsContextSelfManagedOmniGatewayOutboundSetting(val)}
 	}
 	return item
 }
 
-func flattenSgTlsContextFlexGatewayInboundSetting(inbound *secretgroup_tlscontext.TlsContextDetailsInboundSettings) map[string]any {
+func flattenSgTlsContextSelfManagedOmniGatewayInboundSetting(inbound *secretgroup_tlscontext.TlsContextDetailsInboundSettings) map[string]any {
 	item := make(map[string]any)
 	if val, ok := inbound.GetEnableClientCertValidationOk(); ok {
 		item["enable_client_cert_validation"] = *val
@@ -225,7 +225,7 @@ func flattenSgTlsContextFlexGatewayInboundSetting(inbound *secretgroup_tlscontex
 	return item
 }
 
-func flattenSgTlsContextFlexGatewayOutboundSetting(inbound *secretgroup_tlscontext.TlsContextDetailsOutboundSettings) map[string]any {
+func flattenSgTlsContextSelfManagedOmniGatewayOutboundSetting(inbound *secretgroup_tlscontext.TlsContextDetailsOutboundSettings) map[string]any {
 	item := make(map[string]any)
 	if val, ok := inbound.GetSkipServerCertValidationOk(); ok {
 		item["skip_server_cert_validation"] = *val
@@ -256,7 +256,7 @@ func getSgTlsContextFGAttributes() []string {
 	return attributes[:]
 }
 
-// returns true if the target is of type FlexGateway
-func isSgTlsContextFlexGateway(tls *secretgroup_tlscontext.TlsContextDetails) bool {
-	return tls.GetTarget() == "FlexGateway"
+// returns true if the target is of type SelfManagedOmniGateway
+func isSgTlsContextSelfManagedOmniGateway(tls *secretgroup_tlscontext.TlsContextDetails) bool {
+	return tls.GetTarget() == "SelfManagedOmniGateway"
 }
