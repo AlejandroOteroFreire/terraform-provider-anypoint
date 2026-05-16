@@ -5,9 +5,17 @@ All notable changes to this provider are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — 2.0.0 (planned)
+## [Unreleased]
 
-This release contains **breaking changes** as part of the Flex Gateway → Omni Gateway rebrand. Existing users will need to migrate state (see [Migration guide](#migration-from-18x)).
+(nothing yet)
+
+## [2.0.0] — 2026-05-16
+
+First release of the `AlejandroOteroFreire/anypoint` fork.
+
+Contains **breaking changes** as part of the Flex Gateway → Omni Gateway rebrand. Existing users will need to migrate state (see [Migration guide](#migration-from-18x) or the full [INSTALL.md](INSTALL.md#migrating-from-mulesoft-anypointanypoint-18x)).
+
+Distribution moved from the public Terraform Registry (`mulesoft-anypoint/anypoint`) to GitHub Releases at https://github.com/AlejandroOteroFreire/terraform-provider-anypoint/releases.
 
 ### Breaking changes
 

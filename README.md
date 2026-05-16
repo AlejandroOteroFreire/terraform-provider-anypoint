@@ -35,9 +35,11 @@ Whether you need to provision Private Spaces, configure API Manager policies, ma
 
 ## Installation
 
-This fork is **not published** on the public Terraform Registry. Install it locally from the GitHub Releases page.
+This fork is **not published** on the public Terraform Registry. Install it from the GitHub Releases page.
 
-### From GitHub Releases (recommended)
+> 📘 **Full installation guide** with CI/CD examples, migration from `mulesoft-anypoint/anypoint` 1.8.x, troubleshooting, and the `dev_overrides` workflow: **[INSTALL.md](INSTALL.md)**.
+
+### Quick install — from GitHub Releases
 
 1. Download the release archive matching your OS/arch from the [Releases page](https://github.com/AlejandroOteroFreire/terraform-provider-anypoint/releases) — for example:
    - macOS Apple Silicon: `terraform-provider-anypoint_2.0.0_darwin_arm64.zip`
