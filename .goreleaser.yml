@@ -5,9 +5,14 @@
 # To re-enable Terraform Registry publishing, uncomment the `signs:` block below
 # and set the GPG_FINGERPRINT env var in CI.
 
+version: 2
+
+# All modified Go client code lives under `internal/clients/` inside this repo,
+# so we have no local-path replace directives. `go mod download` resolves
+# everything from the module proxy.
 before:
   hooks:
-    - go mod tidy
+    - go mod download
 
 builds:
   - env:
@@ -35,7 +40,7 @@ builds:
     binary: '{{ .ProjectName }}_v{{ .Version }}'
 
 archives:
-  - format: zip
+  - formats: [zip]   # goreleaser v2 plural
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 
 checksum:

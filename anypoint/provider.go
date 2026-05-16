@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	auth "github.com/mulesoft-anypoint/anypoint-client-go/authorization"
+	auth "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/authorization"
 )
 
 // Provider -

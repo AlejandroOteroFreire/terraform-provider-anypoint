@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/iancoleman/strcase"
-	"github.com/mulesoft-anypoint/anypoint-client-go/apim"
+	"github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/apim"
 	"github.com/mulesoft-anypoint/anypoint-client-go/apim_upstream"
 	flexgateway "github.com/mulesoft-anypoint/anypoint-client-go/flexgateway"
 )

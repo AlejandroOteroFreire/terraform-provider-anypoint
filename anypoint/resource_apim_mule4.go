@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/iancoleman/strcase"
-	apim "github.com/mulesoft-anypoint/anypoint-client-go/apim"
+	apim "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/apim"
 )
 
 const APIM_MULE4_TECHNOLOGY = "mule4"

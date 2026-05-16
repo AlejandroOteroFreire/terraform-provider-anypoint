@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mulesoft-anypoint/anypoint-client-go/private_space"
+	"github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/private_space"
 )
 
 var PRIVATE_SPACE_CONNECTION_SCHEMA = map[string]*schema.Schema{

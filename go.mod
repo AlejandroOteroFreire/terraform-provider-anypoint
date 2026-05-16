@@ -8,28 +8,22 @@ require (
 	github.com/mulesoft-anypoint/anypoint-client-go/ame v1.0.0
 	github.com/mulesoft-anypoint/anypoint-client-go/ame_binding v1.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/amq v1.0.0
-	github.com/mulesoft-anypoint/anypoint-client-go/apim v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/apim_policy v0.0.1
 	github.com/mulesoft-anypoint/anypoint-client-go/apim_upstream v0.0.1
 	github.com/mulesoft-anypoint/anypoint-client-go/application_manager_v2 v0.1.0
-	github.com/mulesoft-anypoint/anypoint-client-go/authorization v0.3.0
-	github.com/mulesoft-anypoint/anypoint-client-go/connected_app v1.1.1
 	github.com/mulesoft-anypoint/anypoint-client-go/dlb v0.5.0
 	github.com/mulesoft-anypoint/anypoint-client-go/env v0.2.0
 	github.com/mulesoft-anypoint/anypoint-client-go/flexgateway v0.1.1
 	github.com/mulesoft-anypoint/anypoint-client-go/idp v1.0.1
 	github.com/mulesoft-anypoint/anypoint-client-go/org v0.4.0
-	github.com/mulesoft-anypoint/anypoint-client-go/private_space v1.1.1
 	github.com/mulesoft-anypoint/anypoint-client-go/private_space_tlscontext v1.0.0
 	github.com/mulesoft-anypoint/anypoint-client-go/role v0.2.0
 	github.com/mulesoft-anypoint/anypoint-client-go/rolegroup v0.2.0
 	github.com/mulesoft-anypoint/anypoint-client-go/rtf v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificate v0.1.0
-	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificatepinset v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_crl_distributor_configs v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_keystore v0.1.0
-	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_sharedsecret v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_tlscontext v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_truststore v0.1.0
 	github.com/mulesoft-anypoint/anypoint-client-go/team v1.0.1
@@ -84,9 +78,3 @@ require (
 	google.golang.org/grpc v1.48.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
-
-replace github.com/mulesoft-anypoint/anypoint-client-go => /Users/alejandrooterofreire/Java/git/EpiData/Terraform/anypoint-client-go-fork
-
-replace github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_sharedsecret => /Users/alejandrooterofreire/Java/git/EpiData/Terraform/anypoint-client-go-fork/secretgroup_sharedsecret
-
-replace github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificatepinset => /Users/alejandrooterofreire/Java/git/EpiData/Terraform/anypoint-client-go-fork/secretgroup_certificatepinset

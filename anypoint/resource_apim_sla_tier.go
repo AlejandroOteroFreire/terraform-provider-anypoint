@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/mulesoft-anypoint/anypoint-client-go/apim"
+	"github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/apim"
 )
 
 func resourceApimSlaTier() *schema.Resource {

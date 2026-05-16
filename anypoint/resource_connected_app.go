@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	connected_app "github.com/mulesoft-anypoint/anypoint-client-go/connected_app"
+	connected_app "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/connected_app"
 )
 
 func resourceConnectedApp() *schema.Resource {

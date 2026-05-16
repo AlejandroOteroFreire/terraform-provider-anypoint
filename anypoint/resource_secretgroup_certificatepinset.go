@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mulesoft-anypoint/anypoint-client-go/secretgroup_certificatepinset"
+	"github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/secretgroup_certificatepinset"
 )
 
 func resourceSecretGroupCertificatePinset() *schema.Resource {
