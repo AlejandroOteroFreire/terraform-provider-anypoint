@@ -2,11 +2,34 @@ package anypoint
 
 import (
 	"context"
+	"fmt"
+	"hash/crc32"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/connected_app"
 )
+
+// connectedAppScopeHash computes a deterministic hash for a scope block based on
+// its `scope` name + context_params (org, env_id), so the Set treats two blocks
+// with the same data as equal regardless of order returned by the API.
+func connectedAppScopeHash(v interface{}) int {
+	m := v.(map[string]interface{})
+	scope, _ := m["scope"].(string)
+	org := ""
+	envID := ""
+	if cpList, ok := m["context_params"].([]interface{}); ok && len(cpList) > 0 {
+		if cp, ok := cpList[0].(map[string]interface{}); ok {
+			if v, ok := cp["org"].(string); ok {
+				org = v
+			}
+			if v, ok := cp["env_id"].(string); ok {
+				envID = v
+			}
+		}
+	}
+	return int(crc32.ChecksumIEEE([]byte(fmt.Sprintf("%s|%s|%s", scope, org, envID))))
+}
 
 func resourceConnectedAppScopes() *schema.Resource {
 	return &schema.Resource{
@@ -32,9 +55,10 @@ func resourceConnectedAppScopes() *schema.Resource {
 				Description: "The unique identifier of the connected app.",
 			},
 			"scopes": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "List of scopes to assign to the connected app.",
+				Set:         connectedAppScopeHash,
+				Description: "Set of scopes to assign to the connected app. Order is irrelevant — the API treats scopes as a set.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"scope": {
@@ -142,7 +166,8 @@ func resourceConnectedAppScopesDelete(ctx context.Context, d *schema.ResourceDat
 
 func buildConnectedAppScopesBody(d *schema.ResourceData) *connected_app.ConnectedAppScopesPutBody {
 	body := connected_app.NewConnectedAppScopesPutBody()
-	raw := d.Get("scopes").([]interface{})
+	// TypeSet: d.Get returns *schema.Set; .List() converts to []interface{}
+	raw := d.Get("scopes").(*schema.Set).List()
 	scopes := make([]connected_app.ScopeCore, len(raw))
 	for i, v := range raw {
 		s := v.(map[string]interface{})
@@ -174,7 +199,11 @@ func flattenConnectedAppScopes(scopes []connected_app.ScopeCore) []interface{} {
 			"scope": s.GetScope(),
 		}
 		cp := s.GetContextParams()
-		if cp.Org != nil || cp.EnvId != nil {
+		// Always emit both fields (using "" as the zero value) so that the
+		// state has a stable shape regardless of which fields the API returned.
+		// Configs should also emit both fields (use "" not null) so Set
+		// comparison hashes the same items consistently.
+		if cp.GetOrg() != "" || cp.GetEnvId() != "" {
 			m["context_params"] = []interface{}{
 				map[string]interface{}{
 					"org":    cp.GetOrg(),

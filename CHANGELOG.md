@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (nothing yet)
 
+## [2.0.1] — 2026-05-18
+
+### Fixed
+
+- `anypoint_connected_app_scopes`: scopes schema changed from `TypeList` to `TypeSet` with a deterministic hash on `scope + org + env_id`. The Anypoint API returns scopes in non-deterministic order, which caused a permanent drift loop where every `terraform plan` showed the same set of removed+added scopes (e.g. 17 scopes "changed" but only reordered). Now the set comparison is order-independent.
+- `anypoint_connected_app_scopes`: the `context_params` block is now always emitted in the state with `env_id=""` for org-scoped scopes (instead of being omitted), matching the shape produced by `dynamic context_params { ... env_id = try(..., "") }` in HCL. Configs should set `env_id = ""` (not `null`) for org-only scopes so the Set hashes line up.
+
 ## [2.0.0] — 2026-05-16
 
 First release of the `AlejandroOteroFreire/anypoint` fork.
