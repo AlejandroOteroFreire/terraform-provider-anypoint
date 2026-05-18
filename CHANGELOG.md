@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (nothing yet)
 
+## [2.0.2] — 2026-05-18
+
+### Fixed
+
+- `anypoint_connected_app_scopes`: filter out Anypoint-managed scopes (e.g. `profile`) from both the state and the update payload. Anypoint attaches these automatically to every Connected App and cannot be removed via API — including them in the diff produced a permanent drift loop where every `terraform plan` showed `profile` as needing removal. The filter list lives in `anypointAutoScopes` map and can be extended for any other scopes discovered to be auto-managed.
+
 ## [2.0.1] — 2026-05-18
 
 ### Fixed

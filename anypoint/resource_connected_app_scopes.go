@@ -10,6 +10,15 @@ import (
 	"github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/connected_app"
 )
 
+// anypointAutoScopes lists scope identifiers that the Anypoint platform attaches
+// automatically to every Connected App (you can't pick or remove them via the
+// API — Anypoint puts them back on each PUT /scopes). We filter them out of
+// both directions (Read/flatten and Update/buildBody) so they never produce a
+// drift loop.
+var anypointAutoScopes = map[string]bool{
+	"profile": true,
+}
+
 // connectedAppScopeHash computes a deterministic hash for a scope block based on
 // its `scope` name + context_params (org, env_id), so the Set treats two blocks
 // with the same data as equal regardless of order returned by the API.
@@ -168,11 +177,16 @@ func buildConnectedAppScopesBody(d *schema.ResourceData) *connected_app.Connecte
 	body := connected_app.NewConnectedAppScopesPutBody()
 	// TypeSet: d.Get returns *schema.Set; .List() converts to []interface{}
 	raw := d.Get("scopes").(*schema.Set).List()
-	scopes := make([]connected_app.ScopeCore, len(raw))
-	for i, v := range raw {
+	scopes := make([]connected_app.ScopeCore, 0, len(raw))
+	for _, v := range raw {
 		s := v.(map[string]interface{})
-		scope := connected_app.NewScopeCore()
 		scopeName := s["scope"].(string)
+		// Skip Anypoint-managed scopes (e.g. "profile") — they're added by
+		// the platform automatically and cannot be removed via API.
+		if anypointAutoScopes[scopeName] {
+			continue
+		}
+		scope := connected_app.NewScopeCore()
 		scope.Scope = &scopeName
 
 		if cpList, ok := s["context_params"].([]interface{}); ok && len(cpList) > 0 {
@@ -186,17 +200,23 @@ func buildConnectedAppScopesBody(d *schema.ResourceData) *connected_app.Connecte
 			}
 			scope.ContextParams = cps
 		}
-		scopes[i] = *scope
+		scopes = append(scopes, *scope)
 	}
 	body.Scopes = scopes
 	return body
 }
 
 func flattenConnectedAppScopes(scopes []connected_app.ScopeCore) []interface{} {
-	result := make([]interface{}, len(scopes))
-	for i, s := range scopes {
+	result := make([]interface{}, 0, len(scopes))
+	for _, s := range scopes {
+		scopeName := s.GetScope()
+		// Hide Anypoint-managed scopes from state (e.g. "profile") so they
+		// don't appear as drift when users don't list them in their config.
+		if anypointAutoScopes[scopeName] {
+			continue
+		}
 		m := map[string]interface{}{
-			"scope": s.GetScope(),
+			"scope": scopeName,
 		}
 		cp := s.GetContextParams()
 		// Always emit both fields (using "" as the zero value) so that the
@@ -211,7 +231,7 @@ func flattenConnectedAppScopes(scopes []connected_app.ScopeCore) []interface{} {
 				},
 			}
 		}
-		result[i] = m
+		result = append(result, m)
 	}
 	return result
 }
