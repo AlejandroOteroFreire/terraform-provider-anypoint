@@ -72,14 +72,47 @@ provider "anypoint" {
 }
 ```
 
-### Step 4: Run it
+### Step 4: Configure `~/.terraformrc` to use the local mirror
+
+Even with the binary in the plugin directory, **`terraform init` will hit the public Terraform Registry by default** — and since this fork isn't published there, you'll get `Could not retrieve the list of available versions ... provider registry.terraform.io does not have a provider named ...`.
+
+To fix this, declare a `filesystem_mirror` in `~/.terraformrc` so Terraform looks at `~/.terraform.d/plugins/` first for our provider:
+
+```hcl
+# ~/.terraformrc
+provider_installation {
+  filesystem_mirror {
+    path    = "/Users/<YOUR_USERNAME>/.terraform.d/plugins"  # use absolute path
+    include = ["AlejandroOteroFreire/*"]
+  }
+  direct {
+    exclude = ["AlejandroOteroFreire/*"]
+  }
+}
+```
+
+What this does:
+- `filesystem_mirror { include = ["AlejandroOteroFreire/*"] }` — `AlejandroOteroFreire/*` providers come from the local plugin directory only
+- `direct { exclude = ["AlejandroOteroFreire/*"] }` — every other provider (hashicorp/random, hashicorp/time, etc.) goes to the registry normally
+
+### Step 5: Run it
 
 ```bash
-terraform init
+# If you already had a .terraform/ from a previous version, clear it first
+rm -rf .terraform .terraform.lock.hcl
+
+terraform init -upgrade
 terraform plan
 ```
 
-> ⚠️ Skip `terraform init` if you have `dev_overrides` configured for `AlejandroOteroFreire/anypoint` — it will use the local binary instead.
+Expected output during init:
+
+```
+- Installing AlejandroOteroFreire/anypoint v2.0.0...
+- Installed AlejandroOteroFreire/anypoint v2.0.0 (unauthenticated)
+```
+
+> The `(unauthenticated)` warning is expected — we don't ship GPG-signed artifacts. The SHA256 checksums in the GitHub Release are your integrity check.
 
 ---
 
@@ -126,6 +159,11 @@ terraform {
 
 ## 3. CI/CD — install in a GitLab/GitHub Actions pipeline
 
+Both setups need to:
+
+1. Download the provider zip and extract to the local plugin directory
+2. Write a `~/.terraformrc` that uses a `filesystem_mirror` for `AlejandroOteroFreire/*` (otherwise `terraform init` hits the public registry and fails)
+
 ### GitLab CI (`.gitlab-ci.yml`)
 
 ```yaml
@@ -136,6 +174,7 @@ variables:
 
 before_script:
   - |
+    # 1. Download and install the provider binary
     TARGET="${HOME}/.terraform.d/plugins/registry.terraform.io/${ANYPOINT_PROVIDER_NAMESPACE}/anypoint/${ANYPOINT_PROVIDER_VERSION}/${ANYPOINT_PROVIDER_OS_ARCH}"
     mkdir -p "$TARGET"
     curl -L \
@@ -143,6 +182,19 @@ before_script:
       -o /tmp/anypoint.zip
     unzip -o /tmp/anypoint.zip -d "$TARGET"
     chmod +x "$TARGET/terraform-provider-anypoint_v${ANYPOINT_PROVIDER_VERSION}"
+
+    # 2. Write ~/.terraformrc so Terraform finds the binary locally
+    cat > "$HOME/.terraformrc" <<EOF
+    provider_installation {
+      filesystem_mirror {
+        path    = "${HOME}/.terraform.d/plugins"
+        include = ["${ANYPOINT_PROVIDER_NAMESPACE}/*"]
+      }
+      direct {
+        exclude = ["${ANYPOINT_PROVIDER_NAMESPACE}/*"]
+      }
+    }
+    EOF
 
 stages:
   - plan
@@ -164,11 +216,25 @@ terraform-plan:
     OS_ARCH: linux_amd64
     NAMESPACE: AlejandroOteroFreire
   run: |
+    # 1. Download + install
     TARGET="${HOME}/.terraform.d/plugins/registry.terraform.io/${NAMESPACE}/anypoint/${VERSION}/${OS_ARCH}"
     mkdir -p "$TARGET"
     curl -L "https://github.com/${NAMESPACE}/terraform-provider-anypoint/releases/download/v${VERSION}/terraform-provider-anypoint_${VERSION}_${OS_ARCH}.zip" -o /tmp/a.zip
     unzip -o /tmp/a.zip -d "$TARGET"
     chmod +x "$TARGET/terraform-provider-anypoint_v${VERSION}"
+
+    # 2. Configure filesystem_mirror
+    cat > "$HOME/.terraformrc" <<EOF
+    provider_installation {
+      filesystem_mirror {
+        path    = "${HOME}/.terraform.d/plugins"
+        include = ["${NAMESPACE}/*"]
+      }
+      direct {
+        exclude = ["${NAMESPACE}/*"]
+      }
+    }
+    EOF
 ```
 
 ---
@@ -300,9 +366,30 @@ See [`docs/index.md`](docs/index.md) and [`README.md`](README.md) for the full r
 
 ## Troubleshooting
 
-### `Error: Failed to query available provider packages`
+### `Error: Failed to query available provider packages` / `provider registry.terraform.io does not have a provider named ...`
 
-Terraform can't find the provider on the public registry. This is expected — you need to install it manually (Steps 1–3 above).
+The provider is not on the public Registry. The error means your `~/.terraformrc` doesn't declare a `filesystem_mirror` for `AlejandroOteroFreire/*` so Terraform tries the registry and 404s.
+
+**Fix**: configure the mirror (Step 4 above). The key bit:
+
+```hcl
+provider_installation {
+  filesystem_mirror {
+    path    = "/Users/<YOUR_USERNAME>/.terraform.d/plugins"
+    include = ["AlejandroOteroFreire/*"]
+  }
+  direct {
+    exclude = ["AlejandroOteroFreire/*"]
+  }
+}
+```
+
+After saving, clear any stale init state and re-run:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl
+terraform init -upgrade
+```
 
 ### `Provider produced inconsistent result after apply`
 
