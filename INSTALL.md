@@ -22,21 +22,32 @@ Then:
 
 Go to https://github.com/AlejandroOteroFreire/terraform-provider-anypoint/releases/latest and download the zip matching your platform:
 
-| OS / Arch | Zip name (example for v2.0.0) |
+| OS / Arch | Zip name (example for v2.0.2) |
 |-----------|-------------------------------|
-| macOS Apple Silicon | `terraform-provider-anypoint_2.0.0_darwin_arm64.zip` |
-| macOS Intel         | `terraform-provider-anypoint_2.0.0_darwin_amd64.zip` |
-| Linux x86_64        | `terraform-provider-anypoint_2.0.0_linux_amd64.zip`  |
-| Linux ARM64         | `terraform-provider-anypoint_2.0.0_linux_arm64.zip`  |
-| Windows x86_64      | `terraform-provider-anypoint_2.0.0_windows_amd64.zip`|
+| macOS Apple Silicon | `terraform-provider-anypoint_2.0.2_darwin_arm64.zip` |
+| macOS Intel         | `terraform-provider-anypoint_2.0.2_darwin_amd64.zip` |
+| Linux x86_64        | `terraform-provider-anypoint_2.0.2_linux_amd64.zip`  |
+| Linux ARM64         | `terraform-provider-anypoint_2.0.2_linux_arm64.zip`  |
+| Windows x86_64      | `terraform-provider-anypoint_2.0.2_windows_amd64.zip`|
 
 ### Step 2: Install into Terraform's plugin directory
 
-Terraform expects providers under a specific directory layout. The script below does it for you:
+Terraform expects providers under a specific directory layout:
+
+```
+<plugin-dir>/registry.terraform.io/alejandrooterofreire/anypoint/<VERSION>/<OS_ARCH>/terraform-provider-anypoint_v<VERSION>[.exe]
+```
+
+- **macOS / Linux**: `<plugin-dir>` = `~/.terraform.d/plugins`
+- **Windows**: `<plugin-dir>` = `%APPDATA%\terraform.d\plugins`
+
+Pick the snippet that matches your OS:
+
+#### 🍎 macOS
 
 ```bash
-VERSION=2.0.0
-OS_ARCH=darwin_arm64   # adjust to your platform
+VERSION=2.0.2
+OS_ARCH=darwin_arm64   # use darwin_amd64 on Intel Macs
 NAMESPACE=alejandrooterofreire
 TARGET="$HOME/.terraform.d/plugins/registry.terraform.io/${NAMESPACE}/anypoint/${VERSION}/${OS_ARCH}"
 
@@ -46,12 +57,67 @@ curl -L -o /tmp/anypoint.zip \
 
 # (optional) verify checksum
 curl -sL "https://github.com/${NAMESPACE}/terraform-provider-anypoint/releases/download/v${VERSION}/terraform-provider-anypoint_${VERSION}_SHA256SUMS" \
-  | grep "${OS_ARCH}" | shasum -c -a 256 -
+  | grep "${OS_ARCH}" | shasum -a 256 -c -
 
 unzip -o /tmp/anypoint.zip -d "$TARGET"
 chmod +x "$TARGET/terraform-provider-anypoint_v${VERSION}"
 echo "✓ Installed to $TARGET"
 ```
+
+#### 🐧 Linux
+
+```bash
+VERSION=2.0.2
+OS_ARCH=linux_amd64    # use linux_arm64 on ARM hosts (e.g. AWS Graviton, RPi)
+NAMESPACE=alejandrooterofreire
+TARGET="$HOME/.terraform.d/plugins/registry.terraform.io/${NAMESPACE}/anypoint/${VERSION}/${OS_ARCH}"
+
+mkdir -p "$TARGET"
+curl -L -o /tmp/anypoint.zip \
+  "https://github.com/${NAMESPACE}/terraform-provider-anypoint/releases/download/v${VERSION}/terraform-provider-anypoint_${VERSION}_${OS_ARCH}.zip"
+
+# (optional) verify checksum
+curl -sL "https://github.com/${NAMESPACE}/terraform-provider-anypoint/releases/download/v${VERSION}/terraform-provider-anypoint_${VERSION}_SHA256SUMS" \
+  | grep "${OS_ARCH}" | sha256sum -c -
+
+unzip -o /tmp/anypoint.zip -d "$TARGET"
+chmod +x "$TARGET/terraform-provider-anypoint_v${VERSION}"
+echo "✓ Installed to $TARGET"
+```
+
+#### 🪟 Windows — PowerShell
+
+```powershell
+$VERSION   = "2.0.2"
+$OS_ARCH   = "windows_amd64"
+$NAMESPACE = "alejandrooterofreire"
+$TARGET    = "$env:APPDATA\terraform.d\plugins\registry.terraform.io\$NAMESPACE\anypoint\$VERSION\$OS_ARCH"
+
+New-Item -ItemType Directory -Force -Path $TARGET | Out-Null
+
+$Url = "https://github.com/$NAMESPACE/terraform-provider-anypoint/releases/download/v$VERSION/terraform-provider-anypoint_${VERSION}_$OS_ARCH.zip"
+$Zip = "$env:TEMP\anypoint.zip"
+Invoke-WebRequest -Uri $Url -OutFile $Zip
+
+# (optional) verify checksum
+$SumsUrl  = "https://github.com/$NAMESPACE/terraform-provider-anypoint/releases/download/v$VERSION/terraform-provider-anypoint_${VERSION}_SHA256SUMS"
+$Expected = (Invoke-WebRequest -Uri $SumsUrl -UseBasicParsing).Content -split "`n" |
+            Where-Object { $_ -match "$OS_ARCH" } | ForEach-Object { ($_ -split '\s+')[0] }
+$Actual   = (Get-FileHash -Algorithm SHA256 $Zip).Hash.ToLower()
+if ($Expected -and $Actual -ne $Expected) {
+    Write-Error "Checksum mismatch (expected $Expected, got $Actual)"; exit 1
+}
+
+Expand-Archive -Path $Zip -DestinationPath $TARGET -Force
+Remove-Item $Zip
+Write-Host "✓ Installed to $TARGET"
+```
+
+> On Windows the provider binary is `terraform-provider-anypoint_v2.0.2.exe` (with `.exe` extension). The zip already contains it; you don't need to rename anything.
+
+#### 🪟 Windows — Git Bash / WSL
+
+Use the **Linux** snippet above. On WSL, `~` is the WSL home (e.g. `/home/<user>`). On Git Bash, replace `$HOME/.terraform.d/plugins` with `"$APPDATA/terraform.d/plugins"` so the binary lands where the Windows-native Terraform expects it.
 
 ### Step 3: Declare the provider in your Terraform config
 
@@ -60,7 +126,7 @@ terraform {
   required_providers {
     anypoint = {
       source  = "alejandrooterofreire/anypoint"
-      version = "2.0.0"
+      version = "2.0.2"
     }
   }
 }
@@ -72,17 +138,30 @@ provider "anypoint" {
 }
 ```
 
-### Step 4: Configure `~/.terraformrc` to use the local mirror
+### Step 4: Configure the Terraform CLI config file to use the local mirror
 
-Even with the binary in the plugin directory, **`terraform init` will hit the public Terraform Registry by default** — and since this fork isn't published there, you'll get `Could not retrieve the list of available versions ... provider registry.terraform.io does not have a provider named ...`.
+Even with the binary in the plugin directory, **`terraform init` hits the public Terraform Registry by default** — and since this fork isn't published there, you'll get:
 
-To fix this, declare a `filesystem_mirror` in `~/.terraformrc` so Terraform looks at `~/.terraform.d/plugins/` first for our provider:
+```
+Could not retrieve the list of available versions for provider
+registry.terraform.io/alejandrooterofreire/anypoint: provider registry
+registry.terraform.io does not have a provider named ...
+```
+
+To fix this, add a `filesystem_mirror` block so Terraform looks at the local plugin directory first for `alejandrooterofreire/*`. The CLI config file location depends on your OS:
+
+| OS | Config file path |
+|----|------------------|
+| macOS  | `~/.terraformrc` |
+| Linux  | `~/.terraformrc` |
+| Windows | `%APPDATA%\terraform.rc` |
+
+#### 🍎 macOS — `~/.terraformrc`
 
 ```hcl
-# ~/.terraformrc
 provider_installation {
   filesystem_mirror {
-    path    = "/Users/<YOUR_USERNAME>/.terraform.d/plugins"  # use absolute path
+    path    = "/Users/YOUR_USERNAME/.terraform.d/plugins"   # absolute path required
     include = ["alejandrooterofreire/*"]
   }
   direct {
@@ -91,9 +170,57 @@ provider_installation {
 }
 ```
 
-What this does:
-- `filesystem_mirror { include = ["alejandrooterofreire/*"] }` — `alejandrooterofreire/*` providers come from the local plugin directory only
-- `direct { exclude = ["alejandrooterofreire/*"] }` — every other provider (hashicorp/random, hashicorp/time, etc.) goes to the registry normally
+#### 🐧 Linux — `~/.terraformrc`
+
+```hcl
+provider_installation {
+  filesystem_mirror {
+    path    = "/home/YOUR_USERNAME/.terraform.d/plugins"   # absolute path required
+    include = ["alejandrooterofreire/*"]
+  }
+  direct {
+    exclude = ["alejandrooterofreire/*"]
+  }
+}
+```
+
+#### 🪟 Windows — `%APPDATA%\terraform.rc`
+
+> Use **forward slashes** in the path even on Windows — Terraform's HCL parser doesn't accept backslashes in string values without escaping. Otherwise you get cryptic `An argument or block definition is required here` errors.
+
+```hcl
+provider_installation {
+  filesystem_mirror {
+    path    = "C:/Users/YOUR_USERNAME/AppData/Roaming/terraform.d/plugins"
+    include = ["alejandrooterofreire/*"]
+  }
+  direct {
+    exclude = ["alejandrooterofreire/*"]
+  }
+}
+```
+
+Or generate it from PowerShell:
+
+```powershell
+$RcPath = "$env:APPDATA\terraform.rc"
+@"
+provider_installation {
+  filesystem_mirror {
+    path    = "$($env:APPDATA -replace '\\','/')/terraform.d/plugins"
+    include = ["alejandrooterofreire/*"]
+  }
+  direct {
+    exclude = ["alejandrooterofreire/*"]
+  }
+}
+"@ | Set-Content -Encoding ASCII $RcPath
+Write-Host "✓ Wrote $RcPath"
+```
+
+What this does (any OS):
+- `filesystem_mirror { include = ["alejandrooterofreire/*"] }` — `alejandrooterofreire/*` providers come **only** from the local plugin directory
+- `direct { exclude = ["alejandrooterofreire/*"] }` — every other provider (`hashicorp/random`, `hashicorp/time`, etc.) goes to the public registry as usual
 
 ### Step 5: Run it
 
@@ -128,7 +255,11 @@ cd terraform-provider-anypoint
 go build -o terraform-provider-anypoint
 ```
 
-### Step 2: Configure `~/.terraformrc`
+### Step 2: Configure the Terraform CLI config file
+
+The file is `~/.terraformrc` on macOS/Linux, `%APPDATA%\terraform.rc` on Windows.
+
+#### 🍎🐧 macOS / Linux
 
 ```hcl
 provider_installation {
@@ -139,7 +270,20 @@ provider_installation {
 }
 ```
 
-With this in place, Terraform picks up your local binary directly. **You can skip `terraform init`** for any project using `AlejandroOteroFreire/anypoint`.
+#### 🪟 Windows
+
+Forward slashes even on Windows:
+
+```hcl
+provider_installation {
+  dev_overrides {
+    "alejandrooterofreire/anypoint" = "C:/Users/YOUR_USERNAME/code/terraform-provider-anypoint"
+  }
+  direct {}
+}
+```
+
+With this in place, Terraform picks up your local binary directly. **You can skip `terraform init`** for any project using `alejandrooterofreire/anypoint`.
 
 ### Step 3: Use the same `required_providers` block
 
