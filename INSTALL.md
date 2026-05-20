@@ -37,7 +37,7 @@ Terraform expects providers under a specific directory layout. The script below 
 ```bash
 VERSION=2.0.0
 OS_ARCH=darwin_arm64   # adjust to your platform
-NAMESPACE=AlejandroOteroFreire
+NAMESPACE=alejandrooterofreire
 TARGET="$HOME/.terraform.d/plugins/registry.terraform.io/${NAMESPACE}/anypoint/${VERSION}/${OS_ARCH}"
 
 mkdir -p "$TARGET"
@@ -59,7 +59,7 @@ echo "✓ Installed to $TARGET"
 terraform {
   required_providers {
     anypoint = {
-      source  = "AlejandroOteroFreire/anypoint"
+      source  = "alejandrooterofreire/anypoint"
       version = "2.0.0"
     }
   }
@@ -83,17 +83,17 @@ To fix this, declare a `filesystem_mirror` in `~/.terraformrc` so Terraform look
 provider_installation {
   filesystem_mirror {
     path    = "/Users/<YOUR_USERNAME>/.terraform.d/plugins"  # use absolute path
-    include = ["AlejandroOteroFreire/*"]
+    include = ["alejandrooterofreire/*"]
   }
   direct {
-    exclude = ["AlejandroOteroFreire/*"]
+    exclude = ["alejandrooterofreire/*"]
   }
 }
 ```
 
 What this does:
-- `filesystem_mirror { include = ["AlejandroOteroFreire/*"] }` — `AlejandroOteroFreire/*` providers come from the local plugin directory only
-- `direct { exclude = ["AlejandroOteroFreire/*"] }` — every other provider (hashicorp/random, hashicorp/time, etc.) goes to the registry normally
+- `filesystem_mirror { include = ["alejandrooterofreire/*"] }` — `alejandrooterofreire/*` providers come from the local plugin directory only
+- `direct { exclude = ["alejandrooterofreire/*"] }` — every other provider (hashicorp/random, hashicorp/time, etc.) goes to the registry normally
 
 ### Step 5: Run it
 
@@ -108,8 +108,8 @@ terraform plan
 Expected output during init:
 
 ```
-- Installing AlejandroOteroFreire/anypoint v2.0.0...
-- Installed AlejandroOteroFreire/anypoint v2.0.0 (unauthenticated)
+- Installing alejandrooterofreire/anypoint v2.0.0...
+- Installed alejandrooterofreire/anypoint v2.0.0 (unauthenticated)
 ```
 
 > The `(unauthenticated)` warning is expected — we don't ship GPG-signed artifacts. The SHA256 checksums in the GitHub Release are your integrity check.
@@ -133,7 +133,7 @@ go build -o terraform-provider-anypoint
 ```hcl
 provider_installation {
   dev_overrides {
-    "AlejandroOteroFreire/anypoint" = "/absolute/path/to/terraform-provider-anypoint"
+    "alejandrooterofreire/anypoint" = "/absolute/path/to/terraform-provider-anypoint"
   }
   direct {}
 }
@@ -147,7 +147,7 @@ With this in place, Terraform picks up your local binary directly. **You can ski
 terraform {
   required_providers {
     anypoint = {
-      source  = "AlejandroOteroFreire/anypoint"
+      source  = "alejandrooterofreire/anypoint"
     }
   }
 }
@@ -162,7 +162,7 @@ terraform {
 Both setups need to:
 
 1. Download the provider zip and extract to the local plugin directory
-2. Write a `~/.terraformrc` that uses a `filesystem_mirror` for `AlejandroOteroFreire/*` (otherwise `terraform init` hits the public registry and fails)
+2. Write a `~/.terraformrc` that uses a `filesystem_mirror` for `alejandrooterofreire/*` (otherwise `terraform init` hits the public registry and fails)
 
 ### GitLab CI (`.gitlab-ci.yml`)
 
@@ -170,7 +170,7 @@ Both setups need to:
 variables:
   ANYPOINT_PROVIDER_VERSION: "2.0.0"
   ANYPOINT_PROVIDER_OS_ARCH: "linux_amd64"
-  ANYPOINT_PROVIDER_NAMESPACE: "AlejandroOteroFreire"
+  ANYPOINT_PROVIDER_NAMESPACE: "alejandrooterofreire"
 
 before_script:
   - |
@@ -214,7 +214,7 @@ terraform-plan:
   env:
     VERSION: 2.0.0
     OS_ARCH: linux_amd64
-    NAMESPACE: AlejandroOteroFreire
+    NAMESPACE: alejandrooterofreire
   run: |
     # 1. Download + install
     TARGET="${HOME}/.terraform.d/plugins/registry.terraform.io/${NAMESPACE}/anypoint/${VERSION}/${OS_ARCH}"
@@ -257,7 +257,7 @@ required_providers {
 # after
 required_providers {
   anypoint = {
-    source  = "AlejandroOteroFreire/anypoint"
+    source  = "alejandrooterofreire/anypoint"
     version = "2.0.0"
   }
 }
@@ -270,7 +270,7 @@ This is the **critical step** — without it, Terraform will try to recreate eve
 ```bash
 terraform state replace-provider \
   registry.terraform.io/mulesoft-anypoint/anypoint \
-  registry.terraform.io/AlejandroOteroFreire/anypoint
+  registry.terraform.io/alejandrooterofreire/anypoint
 ```
 
 Confirm with `yes` when prompted. The command rewrites internal state metadata only — no real resources are touched.
@@ -368,7 +368,7 @@ See [`docs/index.md`](docs/index.md) and [`README.md`](README.md) for the full r
 
 ### `Error: Failed to query available provider packages` / `provider registry.terraform.io does not have a provider named ...`
 
-The provider is not on the public Registry. The error means your `~/.terraformrc` doesn't declare a `filesystem_mirror` for `AlejandroOteroFreire/*` so Terraform tries the registry and 404s.
+The provider is not on the public Registry. The error means your `~/.terraformrc` doesn't declare a `filesystem_mirror` for `alejandrooterofreire/*` so Terraform tries the registry and 404s.
 
 **Fix**: configure the mirror (Step 4 above). The key bit:
 
@@ -376,10 +376,10 @@ The provider is not on the public Registry. The error means your `~/.terraformrc
 provider_installation {
   filesystem_mirror {
     path    = "/Users/<YOUR_USERNAME>/.terraform.d/plugins"
-    include = ["AlejandroOteroFreire/*"]
+    include = ["alejandrooterofreire/*"]
   }
   direct {
-    exclude = ["AlejandroOteroFreire/*"]
+    exclude = ["alejandrooterofreire/*"]
   }
 }
 ```
