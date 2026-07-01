@@ -241,12 +241,12 @@ func dataSourceBG() *schema.Resource {
 				Computed:    true,
 				Description: "The number of VPCs reassigned to this organization.",
 			},
-			"entitlements_vpns_assigned": {
+			"entitlements_network_connections_assigned": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The number of VPNs assigned to this organization.",
 			},
-			"entitlements_vpns_reassigned": {
+			"entitlements_network_connections_reassigned": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The number of VPNs reassigned to this organization.",
@@ -482,6 +482,16 @@ func dataSourceBG() *schema.Resource {
 				Computed:    true,
 				Description: "The number of worker clouds reassigned to this organization",
 			},
+			"entitlements_managed_gateway_small": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of small managed gateway assigned to this organization",
+			},
+			"entitlements_managed_gateway_large": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of large managed gateway assigned to this organization",
+			},
 			"owner_created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -579,7 +589,7 @@ func dataSourceBGRead(ctx context.Context, d *schema.ResourceData, m any) diag.D
 	orgid := d.Get("id").(string)
 	authctx := getBGAuthCtx(ctx, &pco)
 	//perform request
-	res, httpr, err := pco.orgclient.DefaultApi.OrganizationsOrgIdGet(authctx, orgid).Execute()
+	res, httpr, err := pco.orgclient.DefaultApi.GetBG(authctx, orgid).Execute()
 	if err != nil {
 		var details string
 		if httpr != nil && httpr.StatusCode >= 400 {
@@ -598,7 +608,7 @@ func dataSourceBGRead(ctx context.Context, d *schema.ResourceData, m any) diag.D
 	}
 	defer httpr.Body.Close()
 	//process response data
-	bg := flattenBGData(&res)
+	bg := flattenBGData(res)
 	if err := setBGCoreAttributesToResourceData(d, bg); err != nil {
 		diags := append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -692,8 +702,8 @@ func flattenBGData(bg *org.MasterBGDetail) map[string]any {
 		item["entitlements_vpcs_assigned"] = vpcs.GetAssigned()
 		item["entitlements_vpcs_reassigned"] = vpcs.GetReassigned()
 		vpns := entitlements.GetVpns()
-		item["entitlements_vpns_assigned"] = vpns.GetAssigned()
-		item["entitlements_vpns_reassigned"] = vpns.GetReassigned()
+		item["entitlements_network_connections_assigned"] = vpns.GetAssigned()
+		item["entitlements_network_connections_reassigned"] = vpns.GetReassigned()
 		workerLoggingOverride := entitlements.GetWorkerLoggingOverride()
 		item["entitlements_workerloggingoverride_enabled"] = workerLoggingOverride.GetEnabled()
 		mqMessages := entitlements.GetMqMessages()
@@ -772,6 +782,10 @@ func flattenBGData(bg *org.MasterBGDetail) map[string]any {
 		workerClouds := entitlements.GetWorkerClouds()
 		item["entitlements_workerclouds_assigned"] = workerClouds.GetAssigned()
 		item["entitlements_workerclouds_reassigned"] = workerClouds.GetReassigned()
+		managedGatewaySmall := entitlements.GetManagedGatewaySmall()
+		item["entitlements_managed_gateway_small"] = managedGatewaySmall.GetAssigned()
+		managedGatewayLarge := entitlements.GetManagedGatewayLarge()
+		item["entitlements_managed_gateway_large"] = managedGatewayLarge.GetAssigned()
 
 		owner := bg.GetOwner()
 		item["owner_id"] = owner.GetId()
@@ -811,7 +825,7 @@ func getBGCoreAttributes() []string {
 		"entitlements_vcoressandbox_assigned", "entitlements_vcoressandbox_reassigned",
 		"entitlements_vcoresdesign_assigned", "entitlements_vcoresdesign_reassigned",
 		"entitlements_staticips_assigned", "entitlements_staticips_reassigned", "entitlements_vpcs_assigned",
-		"entitlements_vpcs_reassigned", "entitlements_vpns_assigned", "entitlements_vpns_reassigned",
+		"entitlements_vpcs_reassigned", "entitlements_network_connections_assigned", "entitlements_network_connections_reassigned",
 		"entitlements_workerloggingoverride_enabled", "entitlements_mqmessages_base", "entitlements_mqmessages_addon",
 		"entitlements_mqrequests_base", "entitlements_mqrequests_addon", "entitlements_objectstorerequestunits_base",
 		"entitlements_objectstorerequestunits_addon", "entitlements_objectstorekeys_base", "entitlements_objectstorekeys_addon",
@@ -828,7 +842,8 @@ func getBGCoreAttributes() []string {
 		"entitlements_appviz", "entitlements_runtimefabric", "entitlements_anypointsecuritytokenization_enabled",
 		"entitlements_anypointsecurityedgepolicies_enabled", "entitlements_runtimefabriccloud_enabled",
 		"entitlements_servicemesh_enabled", "entitlements_messaging_assigned", "entitlements_workerclouds_assigned",
-		"entitlements_workerclouds_reassigned", "owner_created_at", "owner_updated_at", "owner_organization_id",
+		"entitlements_workerclouds_reassigned", "entitlements_managed_gateway_small", "entitlements_managed_gateway_large",
+		"owner_created_at", "owner_updated_at", "owner_organization_id",
 		"owner_firstname", "owner_lastname", "owner_email", "owner_phonenumber", "owner_username", "owner_idprovider_id",
 		"owner_enabled", "owner_deleted", "owner_lastlogin", "owner_mfaverification_excluded", "owner_mfaverifiers_configured",
 		"owner_type", "session_timeout",
@@ -840,7 +855,7 @@ func getBGUpdatableAttributes() []string {
 	attributes := [...]string{
 		"name", "owner_id", "entitlements_createenvironments", "entitlements_createsuborgs",
 		"entitlements_globaldeployment", "entitlements_vcoresproduction_assigned", "entitlements_vcoressandbox_assigned",
-		"entitlements_vcoresdesign_assigned", "entitlements_vpcs_assigned", "entitlements_loadbalancer_assigned", "entitlements_vpns_assigned",
+		"entitlements_vcoresdesign_assigned", "entitlements_vpcs_assigned", "entitlements_loadbalancer_assigned", "entitlements_network_connections_assigned",
 	}
 	return attributes[:]
 }

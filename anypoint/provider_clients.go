@@ -13,6 +13,7 @@ import (
 	env "github.com/mulesoft-anypoint/anypoint-client-go/env"
 	flexgateway "github.com/mulesoft-anypoint/anypoint-client-go/flexgateway"
 	idp "github.com/mulesoft-anypoint/anypoint-client-go/idp"
+	managed_omni_gateway "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/managed_omni_gateway"
 	org "github.com/mulesoft-anypoint/anypoint-client-go/org"
 	private_space "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/private_space"
 	private_space_tlscontext "github.com/mulesoft-anypoint/anypoint-client-go/private_space_tlscontext"
@@ -74,6 +75,7 @@ type ProviderConfOutput struct {
 	appmanagerclient             *application_manager_v2.APIClient
 	privatespaceclient           *private_space.APIClient
 	privatespacetlscontextclient *private_space_tlscontext.APIClient
+	managedomnigatewayclient     *managed_omni_gateway.APIClient
 }
 
 func newProviderConfOutput(access_token string, server_index int) ProviderConfOutput {
@@ -112,6 +114,7 @@ func newProviderConfOutput(access_token string, server_index int) ProviderConfOu
 	appmanager_cfg := application_manager_v2.NewConfiguration()
 	privatespace_cfg := private_space.NewConfiguration()
 	privatespacetlscontext_cfg := private_space_tlscontext.NewConfiguration()
+	managedomnigateway_cfg := managed_omni_gateway.NewConfiguration()
 	// ---------------------------------------------------------------------------- API CLIENTS
 	vpcclient := vpc.NewAPIClient(vpccfg)
 	vpnclient := vpn.NewAPIClient(vpncfg)
@@ -147,6 +150,7 @@ func newProviderConfOutput(access_token string, server_index int) ProviderConfOu
 	appmanagerclient := application_manager_v2.NewAPIClient(appmanager_cfg)
 	privatespaceclient := private_space.NewAPIClient(privatespace_cfg)
 	privatespacetlscontextclient := private_space_tlscontext.NewAPIClient(privatespacetlscontext_cfg)
+	managedomnigatewayclient := managed_omni_gateway.NewAPIClient(managedomnigateway_cfg)
 
 	// ---------------------------------------------------------------------------- RETURN
 	return ProviderConfOutput{
@@ -186,5 +190,6 @@ func newProviderConfOutput(access_token string, server_index int) ProviderConfOu
 		appmanagerclient:             appmanagerclient,
 		privatespaceclient:           privatespaceclient,
 		privatespacetlscontextclient: privatespacetlscontextclient,
+		managedomnigatewayclient:     managedomnigatewayclient,
 	}
 }

@@ -11,5 +11,5 @@ resource "anypoint_bg" "bg" {
   entitlements_staticips_assigned = 0
   entitlements_vpcs_assigned = 1
   entitlements_loadbalancer_assigned = 0
-  entitlements_vpns_assigned = 1
+  entitlements_network_connections_assigned = 1
 }

@@ -22,6 +22,7 @@ type RoutingPostBodyInnerUpstreams struct {
 	Weight *int32 `json:"weight,omitempty"`
 	Uri *string `json:"uri,omitempty"`
 	Label *string `json:"label,omitempty"`
+	TlsContextId *string `json:"tlsContextId,omitempty"`
 }
 
 // NewRoutingPostBodyInnerUpstreams instantiates a new RoutingPostBodyInnerUpstreams object
@@ -137,6 +138,38 @@ func (o *RoutingPostBodyInnerUpstreams) SetLabel(v string) {
 	o.Label = &v
 }
 
+// GetTlsContextId returns the TlsContextId field value if set, zero value otherwise.
+func (o *RoutingPostBodyInnerUpstreams) GetTlsContextId() string {
+	if o == nil || IsNil(o.TlsContextId) {
+		var ret string
+		return ret
+	}
+	return *o.TlsContextId
+}
+
+// GetTlsContextIdOk returns a tuple with the TlsContextId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *RoutingPostBodyInnerUpstreams) GetTlsContextIdOk() (*string, bool) {
+	if o == nil || IsNil(o.TlsContextId) {
+		return nil, false
+	}
+	return o.TlsContextId, true
+}
+
+// HasTlsContextId returns a boolean if a field has been set.
+func (o *RoutingPostBodyInnerUpstreams) HasTlsContextId() bool {
+	if o != nil && !IsNil(o.TlsContextId) {
+		return true
+	}
+
+	return false
+}
+
+// SetTlsContextId gets a reference to the given string and assigns it to the TlsContextId field.
+func (o *RoutingPostBodyInnerUpstreams) SetTlsContextId(v string) {
+	o.TlsContextId = &v
+}
+
 func (o RoutingPostBodyInnerUpstreams) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -155,6 +188,9 @@ func (o RoutingPostBodyInnerUpstreams) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Label) {
 		toSerialize["label"] = o.Label
+	}
+	if !IsNil(o.TlsContextId) {
+		toSerialize["tlsContextId"] = o.TlsContextId
 	}
 	return toSerialize, nil
 }

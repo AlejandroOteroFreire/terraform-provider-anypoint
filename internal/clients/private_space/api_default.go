@@ -2033,6 +2033,265 @@ func (a *DefaultApiService) UpdatePrivateSpaceAdvancedConfig(ctx context.Context
 	return DefaultApiUpdatePrivateSpaceAdvancedConfigRequest{ApiService: a, ctx: ctx, orgId: orgId, privateSpaceId: privateSpaceId}
 }
 
+// =============================================================================
+// PRIVATE SPACE UPGRADE ENDPOINTS
+// =============================================================================
+
+// --- PATCH /upgrade ---
+
+type DefaultApiScheduleUpgradeRequest struct {
+	ctx            context.Context
+	ApiService     *DefaultApiService
+	orgId          string
+	privateSpaceId string
+	date           *string
+	optIn          *bool
+}
+
+func (r DefaultApiScheduleUpgradeRequest) Date(date string) DefaultApiScheduleUpgradeRequest {
+	r.date = &date
+	return r
+}
+
+func (r DefaultApiScheduleUpgradeRequest) OptIn(optIn bool) DefaultApiScheduleUpgradeRequest {
+	r.optIn = &optIn
+	return r
+}
+
+func (r DefaultApiScheduleUpgradeRequest) Execute() (*PrivateSpaceUpgradeStatus, *http.Response, error) {
+	return r.ApiService.ScheduleUpgradeExecute(r)
+}
+
+func (a *DefaultApiService) ScheduleUpgrade(ctx context.Context, orgId string, privateSpaceId string) DefaultApiScheduleUpgradeRequest {
+	return DefaultApiScheduleUpgradeRequest{ApiService: a, ctx: ctx, orgId: orgId, privateSpaceId: privateSpaceId}
+}
+
+func (a *DefaultApiService) ScheduleUpgradeExecute(r DefaultApiScheduleUpgradeRequest) (*PrivateSpaceUpgradeStatus, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PrivateSpaceUpgradeStatus
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ScheduleUpgrade")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/organizations/{orgId}/privatespaces/{privateSpaceId}/upgrade"
+	localVarPath = strings.Replace(localVarPath, "{"+"orgId"+"}", url.PathEscape(parameterValueToString(r.orgId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"privateSpaceId"+"}", url.PathEscape(parameterValueToString(r.privateSpaceId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.date != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "date", r.date, "")
+	}
+	if r.optIn != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "optIn", r.optIn, "")
+	}
+
+	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{body: localVarBody, error: localVarHTTPResponse.Status}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{body: localVarBody, error: err.Error()}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// --- DELETE /upgrade (cancel scheduled upgrade) ---
+
+type DefaultApiCancelUpgradeRequest struct {
+	ctx            context.Context
+	ApiService     *DefaultApiService
+	orgId          string
+	privateSpaceId string
+}
+
+func (r DefaultApiCancelUpgradeRequest) Execute() (*http.Response, error) {
+	return r.ApiService.CancelUpgradeExecute(r)
+}
+
+func (a *DefaultApiService) CancelUpgrade(ctx context.Context, orgId string, privateSpaceId string) DefaultApiCancelUpgradeRequest {
+	return DefaultApiCancelUpgradeRequest{ApiService: a, ctx: ctx, orgId: orgId, privateSpaceId: privateSpaceId}
+}
+
+func (a *DefaultApiService) CancelUpgradeExecute(r DefaultApiCancelUpgradeRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CancelUpgrade")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/organizations/{orgId}/privatespaces/{privateSpaceId}/upgrade"
+	localVarPath = strings.Replace(localVarPath, "{"+"orgId"+"}", url.PathEscape(parameterValueToString(r.orgId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"privateSpaceId"+"}", url.PathEscape(parameterValueToString(r.privateSpaceId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{body: localVarBody, error: localVarHTTPResponse.Status}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+// --- GET /upgradestatus ---
+
+type DefaultApiGetUpgradeStatusRequest struct {
+	ctx            context.Context
+	ApiService     *DefaultApiService
+	orgId          string
+	privateSpaceId string
+}
+
+func (r DefaultApiGetUpgradeStatusRequest) Execute() (*PrivateSpaceUpgradeStatus, *http.Response, error) {
+	return r.ApiService.GetUpgradeStatusExecute(r)
+}
+
+func (a *DefaultApiService) GetUpgradeStatus(ctx context.Context, orgId string, privateSpaceId string) DefaultApiGetUpgradeStatusRequest {
+	return DefaultApiGetUpgradeStatusRequest{ApiService: a, ctx: ctx, orgId: orgId, privateSpaceId: privateSpaceId}
+}
+
+func (a *DefaultApiService) GetUpgradeStatusExecute(r DefaultApiGetUpgradeStatusRequest) (*PrivateSpaceUpgradeStatus, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PrivateSpaceUpgradeStatus
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.GetUpgradeStatus")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/organizations/{orgId}/privatespaces/{privateSpaceId}/upgradestatus"
+	localVarPath = strings.Replace(localVarPath, "{"+"orgId"+"}", url.PathEscape(parameterValueToString(r.orgId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"privateSpaceId"+"}", url.PathEscape(parameterValueToString(r.privateSpaceId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{body: localVarBody, error: localVarHTTPResponse.Status}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{body: localVarBody, error: err.Error()}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 func (a *DefaultApiService) UpdatePrivateSpaceAdvancedConfigExecute(r DefaultApiUpdatePrivateSpaceAdvancedConfigRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPatch

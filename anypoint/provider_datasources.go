@@ -69,4 +69,9 @@ var DATASOURCES_MAP = map[string]*schema.Resource{
 	"anypoint_private_space_transit_gateways":        dataSourcePrivateSpaceTransitGateways(),
 	"anypoint_private_space_transit_gateway":         dataSourcePrivateSpaceTransitGateway(),
 	"anypoint_private_space_associations":            dataSourcePrivateSpaceAssociations(),
+	"anypoint_private_space_upgrade":                 dataSourcePrivateSpaceUpgrade(),
+	"anypoint_managed_omni_gateway":                  dataSourceManagedOmniGateway(),
+	"anypoint_managed_omni_gateways":                 dataSourceManagedOmniGateways(),
+	"anypoint_agent_instances":                       dataSourceAgentInstances(),
+	"anypoint_mcp_servers":                           dataSourceMCPServers(),
 }

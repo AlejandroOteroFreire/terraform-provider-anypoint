@@ -21,7 +21,7 @@ var _ MappedNullable = &RoutingPostBodyInner{}
 type RoutingPostBodyInner struct {
 	Label *string `json:"label,omitempty"`
 	Rules *RoutingRules `json:"rules,omitempty"`
-	Upstreams *RoutingPostBodyInnerUpstreams `json:"upstreams,omitempty"`
+	Upstreams []RoutingPostBodyInnerUpstreams `json:"upstreams,omitempty"`
 }
 
 // NewRoutingPostBodyInner instantiates a new RoutingPostBodyInner object
@@ -106,17 +106,17 @@ func (o *RoutingPostBodyInner) SetRules(v RoutingRules) {
 }
 
 // GetUpstreams returns the Upstreams field value if set, zero value otherwise.
-func (o *RoutingPostBodyInner) GetUpstreams() RoutingPostBodyInnerUpstreams {
+func (o *RoutingPostBodyInner) GetUpstreams() []RoutingPostBodyInnerUpstreams {
 	if o == nil || IsNil(o.Upstreams) {
-		var ret RoutingPostBodyInnerUpstreams
+		var ret []RoutingPostBodyInnerUpstreams
 		return ret
 	}
-	return *o.Upstreams
+	return o.Upstreams
 }
 
 // GetUpstreamsOk returns a tuple with the Upstreams field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *RoutingPostBodyInner) GetUpstreamsOk() (*RoutingPostBodyInnerUpstreams, bool) {
+func (o *RoutingPostBodyInner) GetUpstreamsOk() ([]RoutingPostBodyInnerUpstreams, bool) {
 	if o == nil || IsNil(o.Upstreams) {
 		return nil, false
 	}
@@ -132,9 +132,9 @@ func (o *RoutingPostBodyInner) HasUpstreams() bool {
 	return false
 }
 
-// SetUpstreams gets a reference to the given RoutingPostBodyInnerUpstreams and assigns it to the Upstreams field.
-func (o *RoutingPostBodyInner) SetUpstreams(v RoutingPostBodyInnerUpstreams) {
-	o.Upstreams = &v
+// SetUpstreams gets a reference to the given []RoutingPostBodyInnerUpstreams and assigns it to the Upstreams field.
+func (o *RoutingPostBodyInner) SetUpstreams(v []RoutingPostBodyInnerUpstreams) {
+	o.Upstreams = v
 }
 
 func (o RoutingPostBodyInner) MarshalJSON() ([]byte, error) {

@@ -291,7 +291,7 @@ func resourceBG() *schema.Resource {
 				Computed:    true,
 				Description: "The number of VPCs reassigned to this organization.",
 			},
-			"entitlements_vpns_assigned": {
+			"entitlements_network_connections_assigned": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
@@ -300,7 +300,7 @@ func resourceBG() *schema.Resource {
 					return DiffSuppressFunc4OptionalPrimitives(k, old, new, d, "0")
 				},
 			},
-			"entitlements_vpns_reassigned": {
+			"entitlements_network_connections_reassigned": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The number of VPNs reassigned to this organization.",
@@ -688,6 +688,16 @@ func resourceBG() *schema.Resource {
 				Computed:    true,
 				Description: "The number of worker clouds reassigned to this organization",
 			},
+			"entitlements_managed_gateway_small": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of small managed gateway assigned to this organization",
+			},
+			"entitlements_managed_gateway_large": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of large managed gateway assigned to this organization",
+			},
 			"owner_created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -788,7 +798,7 @@ func resourceBGCreate(ctx context.Context, d *schema.ResourceData, m any) diag.D
 	authctx := getBGAuthCtx(ctx, &pco)
 	body := newBGPostBody(d)
 	//perform request
-	res, httpr, err := pco.orgclient.DefaultApi.OrganizationsPost(authctx).BGPostReqBody(*body).Execute()
+	res, httpr, err := pco.orgclient.DefaultApi.CreateBG(authctx).BGPostReqBody(*body).Execute()
 	if err != nil {
 		var details string
 		if httpr != nil && httpr.StatusCode >= 400 {
@@ -817,7 +827,7 @@ func resourceBGRead(ctx context.Context, d *schema.ResourceData, m any) diag.Dia
 	orgid := d.Id()
 	authctx := getBGAuthCtx(ctx, &pco)
 	//perform request
-	res, httpr, err := pco.orgclient.DefaultApi.OrganizationsOrgIdGet(authctx, orgid).Execute()
+	res, httpr, err := pco.orgclient.DefaultApi.GetBG(authctx, orgid).Execute()
 	if err != nil {
 		var details string
 		if httpr != nil && httpr.StatusCode >= 400 {
@@ -836,7 +846,7 @@ func resourceBGRead(ctx context.Context, d *schema.ResourceData, m any) diag.Dia
 	}
 	defer httpr.Body.Close()
 	//process response data
-	orginstance := flattenBGData(&res)
+	orginstance := flattenBGData(res)
 	if err := setBGCoreAttributesToResourceData(d, orginstance); err != nil {
 		diags := append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -857,7 +867,7 @@ func resourceBGUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.D
 	//check for updates
 	if d.HasChanges(getBGUpdatableAttributes()...) {
 		body := newBGPutBody(d)
-		_, httpr, err := pco.orgclient.DefaultApi.OrganizationsOrgIdPut(authctx, orgid).BGPutReqBody(*body).Execute()
+		_, httpr, err := pco.orgclient.DefaultApi.UpdateBG(authctx, orgid).BGUpdateReqBody(*body).Execute()
 		if err != nil {
 			var details string
 			if httpr != nil && httpr.StatusCode >= 400 {
@@ -887,7 +897,7 @@ func resourceBGDelete(ctx context.Context, d *schema.ResourceData, m any) diag.D
 	orgid := d.Id()
 	authctx := getBGAuthCtx(ctx, &pco)
 	//perform request
-	_, httpr, err := pco.orgclient.DefaultApi.OrganizationsOrgIdDelete(authctx, orgid).Execute()
+	_, httpr, err := pco.orgclient.DefaultApi.DeleteBG(authctx, orgid).Execute()
 	if err != nil {
 		var details string
 		if httpr != nil && httpr.StatusCode >= 400 {
@@ -927,10 +937,10 @@ func newBGPostBody(d *schema.ResourceData) *org.BGPostReqBody {
 }
 
 /*
- * Creates body for B.G PUT request
+ * Creates body for B.G update request
  */
-func newBGPutBody(d *schema.ResourceData) *org.BGPutReqBody {
-	body := org.NewBGPutReqBodyWithDefaults()
+func newBGPutBody(d *schema.ResourceData) *org.BGUpdateReqBody {
+	body := org.NewBGUpdateReqBodyWithDefaults()
 	body.SetName(d.Get("name").(string))
 	body.SetOwnerId(d.Get("owner_id").(string))
 	body.SetEntitlements(*newEntitlementsFromD(d))
@@ -943,32 +953,32 @@ func newBGPutBody(d *schema.ResourceData) *org.BGPutReqBody {
  * Creates Entitlements from Resource Data Schema
  */
 func newEntitlementsFromD(d *schema.ResourceData) *org.EntitlementsCore {
-	loadbalancer := org.NewLoadBalancerWithDefaults()
+	loadbalancer := org.NewLoadBalancerEntitlementWithDefaults()
 	loadbalancer.SetAssigned(int32(d.Get("entitlements_loadbalancer_assigned").(int)))
-	staticips := org.NewStaticIpsWithDefaults()
+	staticips := org.NewStaticIpsEntitlementWithDefaults()
 	staticips.SetAssigned(int32(d.Get("entitlements_staticips_assigned").(int)))
-	vcoresandbox := org.NewVCoresSandboxWithDefaults()
+	vcoresandbox := org.NewVCoresSandboxEntitlementWithDefaults()
 	vcoresandbox.SetAssigned(float32(d.Get("entitlements_vcoressandbox_assigned").(float64)))
-	vcoredesign := org.NewVCoresDesignWithDefaults()
+	vcoredesign := org.NewVCoresDesignEntitlementWithDefaults()
 	vcoredesign.SetAssigned(float32(d.Get("entitlements_vcoresdesign_assigned").(float64)))
-	vpns := org.NewVpnsWithDefaults()
-	vpns.SetAssigned(int32(d.Get("entitlements_vpns_assigned").(int)))
-	vpcs := org.NewVpcsWithDefaults()
+	vpns := org.NewVpnsEntitlementWithDefaults()
+	vpns.SetAssigned(int32(d.Get("entitlements_network_connections_assigned").(int)))
+	vpcs := org.NewVpcsEntitlementWithDefaults()
 	vpcs.SetAssigned(int32(d.Get("entitlements_vpcs_assigned").(int)))
-	vcoreprod := org.NewVCoresProductionWithDefaults()
+	vcoreprod := org.NewVCoresProductionEntitlementWithDefaults()
 	vcoreprod.SetAssigned(float32(d.Get("entitlements_vcoresproduction_assigned").(float64)))
-	entitlements := org.NewEntitlementsCore(
-		d.Get("entitlements_globaldeployment").(bool),
-		d.Get("entitlements_createenvironments").(bool),
-		d.Get("entitlements_createsuborgs").(bool),
-		*loadbalancer,
-		*staticips,
-		*vcoredesign,
-		*vcoreprod,
-		*vcoresandbox,
-		*vpcs,
-		*vpns,
-	)
+
+	entitlements := org.NewEntitlementsCore()
+	entitlements.SetGlobalDeployment(d.Get("entitlements_globaldeployment").(bool))
+	entitlements.SetCreateEnvironments(d.Get("entitlements_createenvironments").(bool))
+	entitlements.SetCreateSubOrgs(d.Get("entitlements_createsuborgs").(bool))
+	entitlements.SetLoadBalancer(*loadbalancer)
+	entitlements.SetStaticIps(*staticips)
+	entitlements.SetVCoresDesign(*vcoredesign)
+	entitlements.SetVCoresProduction(*vcoreprod)
+	entitlements.SetVCoresSandbox(*vcoresandbox)
+	entitlements.SetVpcs(*vpcs)
+	entitlements.SetVpns(*vpns)
 
 	return entitlements
 }

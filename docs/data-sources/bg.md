@@ -61,6 +61,8 @@ data "anypoint_bg" "bg" {
 - `entitlements_kpidashboard_enabled` (Boolean) Whether KPI dashboard is enabled for this organization.
 - `entitlements_loadbalancer_assigned` (Number) The number of dedicated load balancers (DLB) assigned to this organization.
 - `entitlements_loadbalancer_reassigned` (Number) The number of dedicated load balancers (DLB) reassigned to this organization.
+- `entitlements_managed_gateway_large` (Number) The number of large managed gateway assigned to this organization
+- `entitlements_managed_gateway_small` (Number) The number of small managed gateway assigned to this organization
 - `entitlements_messaging_assigned` (Number) The number of messaging assigned to this organization.
 - `entitlements_monitoringcenter_productsku` (Number) The number of monitoring center products sku for this organization.
 - `entitlements_mqadvancedfeatures_enabled` (Boolean) Whether the Anypoint MQ advanced features are enabled for this organization.
@@ -68,6 +70,8 @@ data "anypoint_bg" "bg" {
 - `entitlements_mqmessages_base` (Number) The number of basic MQ messages assigned to this organization.
 - `entitlements_mqrequests_addon` (Number) The number of MQ requests addon assigned to this organization.
 - `entitlements_mqrequests_base` (Number) The number of MQ requests base assigned to this organization.
+- `entitlements_network_connections_assigned` (Number) The number of VPNs assigned to this organization.
+- `entitlements_network_connections_reassigned` (Number) The number of VPNs reassigned to this organization.
 - `entitlements_objectstorekeys_addon` (Number) The number of object store keys addon for this organization.
 - `entitlements_objectstorekeys_base` (Number) The number of object store keys base for this organization.
 - `entitlements_objectstorerequestunits_addon` (Number) The number of object store requests units addon for this organization.
@@ -90,8 +94,6 @@ data "anypoint_bg" "bg" {
 - `entitlements_vcoressandbox_reassigned` (Number) The number of sandbox vcores reassigned to this organization.
 - `entitlements_vpcs_assigned` (Number) The number of VPCs assigned to this organization.
 - `entitlements_vpcs_reassigned` (Number) The number of VPCs reassigned to this organization.
-- `entitlements_vpns_assigned` (Number) The number of VPNs assigned to this organization.
-- `entitlements_vpns_reassigned` (Number) The number of VPNs reassigned to this organization.
 - `entitlements_workerclouds_assigned` (Number) The number of worker clouds assigned to this organization
 - `entitlements_workerclouds_reassigned` (Number) The number of worker clouds reassigned to this organization
 - `entitlements_workerloggingoverride_enabled` (Boolean) Whether the loggin override on workers is enabled for this organization.

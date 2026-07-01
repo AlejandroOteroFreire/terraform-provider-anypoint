@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (nothing yet)
 
+## [2.0.3] — 2026-07-01
+
+### Changed
+
+- `anypoint_bg` (resource and data source): renamed `entitlements_vpns_assigned`/`entitlements_vpns_reassigned` to `entitlements_network_connections_assigned`/`entitlements_network_connections_reassigned` to match the Omni Gateway-era Anypoint API naming.
+- Bumped `github.com/mulesoft-anypoint/anypoint-client-go/org` from `v0.4.0` to `v1.2.0`. This renames the internal API methods used by `anypoint_bg` (`OrganizationsPost`→`CreateBG`, `OrganizationsOrgIdGet`→`GetBG`, `OrganizationsOrgIdPut`→`UpdateBG`, `OrganizationsOrgIdDelete`→`DeleteBG`) and switches entitlement sub-objects to the new `*Entitlement`-suffixed types (e.g. `LoadBalancer`→`LoadBalancerEntitlement`). No schema-visible change beyond what's listed below.
+
+### Added
+
+- `anypoint_bg` (resource and data source): expose `entitlements_managed_gateway_small` and `entitlements_managed_gateway_large` as read-only entitlement attributes. (`omni_gateway` was investigated but is **not** an entitlement field in the org API — omitted.)
+- `anypoint_private_space_upgrade` (new resource and data source): schedule, cancel and read the status of a CloudHub 2.0 Private Space runtime upgrade, matching the `PATCH/DELETE/GET .../upgrade` and `GET .../upgradestatus` endpoints. Adds `ScheduleUpgrade`, `CancelUpgrade` and `GetUpgradeStatus` to the internal `private_space` client, plus the `PrivateSpaceUpgradeStatus` model.
+- `anypoint_managed_omni_gateway` (new resource) and `anypoint_managed_omni_gateway`/`anypoint_managed_omni_gateways` (new data sources): create, read, update, delete and list CloudHub 2.0 **managed** Omni Gateway instances (as opposed to the existing `anypoint_self_managed_omni_gateway`, which is customer-hosted). Backed by a new hand-written internal client (`internal/clients/managed_omni_gateway`) against the Omni Gateway Manager API (`https://anypoint.mulesoft.com/gatewaymanager/xapi/v1`), since this API has no generated SDK yet. Supports `ingress`, `properties`, `logging` and `tracing` configuration blocks, plus a `desired_status` field to start/stop the gateway via the `.../desiredstatus` endpoint.
+- `anypoint_agent_instance` and `anypoint_mcp_server` (new resources, "Agents Tools"): manage Agent and MCP server instances deployed to an Omni Gateway target, with `spec`/`endpoint`/`deployment`/`routing` blocks and an optional `gateway_id` shortcut that auto-resolves the deployment target via `anypoint_managed_omni_gateway`. Both reuse the existing `internal/clients/apim` client (same `.../apis` endpoint as `anypoint_apim_mule4`), distinguished only by `endpoint.type` (`a2a` vs `mcp`) — confirmed by reading the real endpoints/schemas from the official `mulesoft/terraform-provider-anypoint` source (`internal/client/agentstools`, `internal/resource/agentstools`). Fixed a pre-existing generator bug in `internal/clients/apim/model_routing_post_body_inner.go`: `Upstreams` was typed as a single object instead of `[]RoutingPostBodyInnerUpstreams`, which would have silently dropped all but one upstream per route; also added the missing `tls_context_id` field.
+- `anypoint_agent_instances` and `anypoint_mcp_servers` (new data sources): list Agent/MCP server instances for an environment. Since the API Manager list endpoint doesn't expose `endpoint.type`, this filters candidates by `technology == "flexGateway"` and then fetches each candidate's details to check `endpoint.type` (one extra API call per candidate).
+
+### Fixed
+
+- `anypoint_managed_omni_gateway`: fixed the Omni Gateway Manager API base path from `/gatewaymanager/api/v1` to the correct `/gatewaymanager/xapi/v1`, and added the `X-ANYPNT-ORG-ID`/`X-ANYPNT-ENV-ID` headers the platform expects on every call to this API — both confirmed against the official provider's source after it was found.
+
 ## [2.0.2] — 2026-05-18
 
 ### Fixed
