@@ -12,4 +12,6 @@ resource "anypoint_bg" "bg" {
   entitlements_vpcs_assigned = 1
   entitlements_loadbalancer_assigned = 0
   entitlements_network_connections_assigned = 1
+  entitlements_managed_gateway_small = 1
+  entitlements_managed_gateway_large = 0
 }

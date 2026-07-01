@@ -61,8 +61,10 @@ data "anypoint_bg" "bg" {
 - `entitlements_kpidashboard_enabled` (Boolean) Whether KPI dashboard is enabled for this organization.
 - `entitlements_loadbalancer_assigned` (Number) The number of dedicated load balancers (DLB) assigned to this organization.
 - `entitlements_loadbalancer_reassigned` (Number) The number of dedicated load balancers (DLB) reassigned to this organization.
-- `entitlements_managed_gateway_large` (Number) The number of large managed gateway assigned to this organization
-- `entitlements_managed_gateway_small` (Number) The number of small managed gateway assigned to this organization
+- `entitlements_managed_gateway_large` (Number) The number of large managed gateways assigned to this organization.
+- `entitlements_managed_gateway_large_reassigned` (Number) The number of large managed gateways reassigned for this organization.
+- `entitlements_managed_gateway_small` (Number) The number of small managed gateways assigned to this organization.
+- `entitlements_managed_gateway_small_reassigned` (Number) The number of small managed gateways reassigned for this organization.
 - `entitlements_messaging_assigned` (Number) The number of messaging assigned to this organization.
 - `entitlements_monitoringcenter_productsku` (Number) The number of monitoring center products sku for this organization.
 - `entitlements_mqadvancedfeatures_enabled` (Boolean) Whether the Anypoint MQ advanced features are enabled for this organization.

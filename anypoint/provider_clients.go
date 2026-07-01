@@ -14,7 +14,7 @@ import (
 	flexgateway "github.com/mulesoft-anypoint/anypoint-client-go/flexgateway"
 	idp "github.com/mulesoft-anypoint/anypoint-client-go/idp"
 	managed_omni_gateway "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/managed_omni_gateway"
-	org "github.com/mulesoft-anypoint/anypoint-client-go/org"
+	org "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/org"
 	private_space "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/private_space"
 	private_space_tlscontext "github.com/mulesoft-anypoint/anypoint-client-go/private_space_tlscontext"
 	role "github.com/mulesoft-anypoint/anypoint-client-go/role"

@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	org "github.com/mulesoft-anypoint/anypoint-client-go/org"
+	org "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/org"
 )
 
 func dataSourceBG() *schema.Resource {
@@ -485,12 +485,22 @@ func dataSourceBG() *schema.Resource {
 			"entitlements_managed_gateway_small": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "The number of small managed gateway assigned to this organization",
+				Description: "The number of small managed gateways assigned to this organization.",
+			},
+			"entitlements_managed_gateway_small_reassigned": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of small managed gateways reassigned for this organization.",
 			},
 			"entitlements_managed_gateway_large": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "The number of large managed gateway assigned to this organization",
+				Description: "The number of large managed gateways assigned to this organization.",
+			},
+			"entitlements_managed_gateway_large_reassigned": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of large managed gateways reassigned for this organization.",
 			},
 			"owner_created_at": {
 				Type:        schema.TypeString,
@@ -784,8 +794,10 @@ func flattenBGData(bg *org.MasterBGDetail) map[string]any {
 		item["entitlements_workerclouds_reassigned"] = workerClouds.GetReassigned()
 		managedGatewaySmall := entitlements.GetManagedGatewaySmall()
 		item["entitlements_managed_gateway_small"] = managedGatewaySmall.GetAssigned()
+		item["entitlements_managed_gateway_small_reassigned"] = managedGatewaySmall.GetReassigned()
 		managedGatewayLarge := entitlements.GetManagedGatewayLarge()
 		item["entitlements_managed_gateway_large"] = managedGatewayLarge.GetAssigned()
+		item["entitlements_managed_gateway_large_reassigned"] = managedGatewayLarge.GetReassigned()
 
 		owner := bg.GetOwner()
 		item["owner_id"] = owner.GetId()
@@ -842,7 +854,8 @@ func getBGCoreAttributes() []string {
 		"entitlements_appviz", "entitlements_runtimefabric", "entitlements_anypointsecuritytokenization_enabled",
 		"entitlements_anypointsecurityedgepolicies_enabled", "entitlements_runtimefabriccloud_enabled",
 		"entitlements_servicemesh_enabled", "entitlements_messaging_assigned", "entitlements_workerclouds_assigned",
-		"entitlements_workerclouds_reassigned", "entitlements_managed_gateway_small", "entitlements_managed_gateway_large",
+		"entitlements_workerclouds_reassigned", "entitlements_managed_gateway_small", "entitlements_managed_gateway_small_reassigned",
+		"entitlements_managed_gateway_large", "entitlements_managed_gateway_large_reassigned",
 		"owner_created_at", "owner_updated_at", "owner_organization_id",
 		"owner_firstname", "owner_lastname", "owner_email", "owner_phonenumber", "owner_username", "owner_idprovider_id",
 		"owner_enabled", "owner_deleted", "owner_lastlogin", "owner_mfaverification_excluded", "owner_mfaverifiers_configured",
@@ -856,6 +869,7 @@ func getBGUpdatableAttributes() []string {
 		"name", "owner_id", "entitlements_createenvironments", "entitlements_createsuborgs",
 		"entitlements_globaldeployment", "entitlements_vcoresproduction_assigned", "entitlements_vcoressandbox_assigned",
 		"entitlements_vcoresdesign_assigned", "entitlements_vpcs_assigned", "entitlements_loadbalancer_assigned", "entitlements_network_connections_assigned",
+		"entitlements_managed_gateway_small", "entitlements_managed_gateway_large",
 	}
 	return attributes[:]
 }

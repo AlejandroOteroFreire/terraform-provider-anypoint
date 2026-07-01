@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (nothing yet)
 
+## [2.0.4] — 2026-07-01
+
+### Changed
+
+- `anypoint_bg` (resource and data source): migrated off the external `github.com/mulesoft-anypoint/anypoint-client-go/org` module onto a new internal client (`internal/clients/org`), matching this repo's own-client convention already used by `apim`, `private_space`, `managed_omni_gateway`, `connected_app`, etc. The external module is dropped from `go.mod` entirely.
+  - This fixes `entitlements_managed_gateway_small`/`entitlements_managed_gateway_large`, which are now **configurable** (previously read-only) — the old external SDK didn't model these two fields for create/update even though the real Access Management API accepts them (confirmed against `mulesoft/mulesoft-dx`'s `apis/access-management/api.yaml`). Added corresponding read-only `entitlements_managed_gateway_small_reassigned`/`entitlements_managed_gateway_large_reassigned` fields.
+  - It also fixes a **dormant bug**: roughly 40 `entitlements_*` attributes were already declared `Optional` in the schema (e.g. `entitlements_mqmessages_base`, `entitlements_designcenter_api`, `entitlements_servicemesh_enabled`, `entitlements_crowd_*`, ...) but were silently never sent to the API on create/update, because the external SDK's `EntitlementsCore` type only modeled 10 of the ~50 entitlement fields the real API supports. All of them are now genuinely applied.
+
 ## [2.0.3] — 2026-07-01
 
 ### Changed

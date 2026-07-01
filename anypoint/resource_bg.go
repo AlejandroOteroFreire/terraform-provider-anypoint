@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	org "github.com/mulesoft-anypoint/anypoint-client-go/org"
+	org "github.com/mulesoft-anypoint/terraform-provider-anypoint/internal/clients/org"
 )
 
 func resourceBG() *schema.Resource {
@@ -690,13 +690,31 @@ func resourceBG() *schema.Resource {
 			},
 			"entitlements_managed_gateway_small": {
 				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     0,
+				Description: "The number of small managed gateways assigned to this organization.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return DiffSuppressFunc4OptionalPrimitives(k, old, new, d, "0")
+				},
+			},
+			"entitlements_managed_gateway_small_reassigned": {
+				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "The number of small managed gateway assigned to this organization",
+				Description: "The number of small managed gateways reassigned for this organization.",
 			},
 			"entitlements_managed_gateway_large": {
 				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     0,
+				Description: "The number of large managed gateways assigned to this organization.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return DiffSuppressFunc4OptionalPrimitives(k, old, new, d, "0")
+				},
+			},
+			"entitlements_managed_gateway_large_reassigned": {
+				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "The number of large managed gateway assigned to this organization",
+				Description: "The number of large managed gateways reassigned for this organization.",
 			},
 			"owner_created_at": {
 				Type:        schema.TypeString,
@@ -980,8 +998,83 @@ func newEntitlementsFromD(d *schema.ResourceData) *org.EntitlementsCore {
 	entitlements.SetVpcs(*vpcs)
 	entitlements.SetVpns(*vpns)
 
+	// The remaining entitlements below are all backed by the org.Entitlements struct now
+	// (internal/clients/org), which - unlike the external anypoint-client-go/org module it
+	// replaces - models every field the real Access Management API actually accepts on
+	// create/update. Previously these were declared Optional in the schema but silently
+	// never sent, because the old SDK's EntitlementsCore only supported the 10 fields above.
+	entitlements.SetWorkerLoggingOverride(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_workerloggingoverride_enabled").(bool))})
+	entitlements.SetMqMessages(org.BaseAddOnEntitlement{
+		Base:  int32Ptr(int32(d.Get("entitlements_mqmessages_base").(int))),
+		AddOn: int32Ptr(int32(d.Get("entitlements_mqmessages_addon").(int))),
+	})
+	entitlements.SetMqRequests(org.BaseAddOnEntitlement{
+		Base:  int32Ptr(int32(d.Get("entitlements_mqrequests_base").(int))),
+		AddOn: int32Ptr(int32(d.Get("entitlements_mqrequests_addon").(int))),
+	})
+	entitlements.SetObjectStoreRequestUnits(org.BaseAddOnEntitlement{
+		Base:  int32Ptr(int32(d.Get("entitlements_objectstorerequestunits_base").(int))),
+		AddOn: int32Ptr(int32(d.Get("entitlements_objectstorerequestunits_addon").(int))),
+	})
+	entitlements.SetObjectStoreKeys(org.BaseAddOnEntitlement{
+		Base:  int32Ptr(int32(d.Get("entitlements_objectstorekeys_base").(int))),
+		AddOn: int32Ptr(int32(d.Get("entitlements_objectstorekeys_addon").(int))),
+	})
+	entitlements.SetMqAdvancedFeatures(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_mqadvancedfeatures_enabled").(bool))})
+	entitlements.SetGateways(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_gateways_assigned").(int)))})
+	entitlements.SetDesignCenter(org.DesignCenterEntitlement{
+		Api:    boolPtr(d.Get("entitlements_designcenter_api").(bool)),
+		Mozart: boolPtr(d.Get("entitlements_designcenter_mozart").(bool)),
+	})
+	entitlements.SetPartnersProduction(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_partnersproduction_assigned").(int)))})
+	entitlements.SetPartnersSandbox(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_partnerssandbox_assigned").(int)))})
+	entitlements.SetTradingPartnersProduction(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_tradingpartnersproduction_assigned").(int)))})
+	entitlements.SetTradingPartnersSandbox(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_tradingpartnerssandbox_assigned").(int)))})
+	entitlements.SetExternalIdentity(d.Get("entitlements_externalidentity").(bool))
+	entitlements.SetAutoscaling(d.Get("entitlements_autoscaling").(bool))
+	entitlements.SetArmAlerts(d.Get("entitlements_armalerts").(bool))
+	entitlements.SetApis(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_apis_enabled").(bool))})
+	entitlements.SetApiMonitoring(org.ApiMonitoringEntitlement{Schedules: int32Ptr(int32(d.Get("entitlements_apimonitoring_schedules").(int)))})
+	entitlements.SetApiCommunityManager(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_apicommunitymanager_enabled").(bool))})
+	entitlements.SetMonitoringCenter(org.MonitoringCenterEntitlement{ProductSKU: int32Ptr(int32(d.Get("entitlements_monitoringcenter_productsku").(int)))})
+	entitlements.SetApiQuery(org.ApiQueryEntitlement{
+		Enabled:    boolPtr(d.Get("entitlements_apiquery_enabled").(bool)),
+		ProductSKU: int32Ptr(int32(d.Get("entitlements_apiquery_productsku").(int))),
+	})
+	entitlements.SetApiQueryC360(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_apiqueryc360_enabled").(bool))})
+	entitlements.SetAngGovernance(org.AngGovernanceEntitlement{Level: int32Ptr(int32(d.Get("entitlements_anggovernance_level").(int)))})
+	entitlements.SetCrowd(org.CrowdEntitlement{
+		HideApiManagerDesigner: boolPtr(d.Get("entitlements_crowd_hideapimanagerdesigner").(bool)),
+		HideFormerApiPlatform:  boolPtr(d.Get("entitlements_crowd_hideformerapiplatform").(bool)),
+		Environments:           boolPtr(d.Get("entitlements_crowd_environments").(bool)),
+	})
+	entitlements.SetCam(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_cam_enabled").(bool))})
+	entitlements.SetExchange2(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_exchange2_enabled").(bool))})
+	entitlements.SetCrowdSelfServiceMigration(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_crowdselfservicemigration_enabled").(bool))})
+	entitlements.SetKpiDashboard(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_kpidashboard_enabled").(bool))})
+	entitlements.SetPcf(d.Get("entitlements_pcf").(bool))
+	entitlements.SetAppViz(d.Get("entitlements_appviz").(bool))
+	entitlements.SetRuntimeFabric(d.Get("entitlements_runtimefabric").(bool))
+	entitlements.SetAnypointSecurityTokenization(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_anypointsecuritytokenization_enabled").(bool))})
+	entitlements.SetAnypointSecurityEdgePolicies(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_anypointsecurityedgepolicies_enabled").(bool))})
+	entitlements.SetRuntimeFabricCloud(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_runtimefabriccloud_enabled").(bool))})
+	entitlements.SetServiceMesh(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_servicemesh_enabled").(bool))})
+	entitlements.SetMessaging(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_messaging_assigned").(int)))})
+	entitlements.SetWorkerClouds(org.AssignedReassignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_workerclouds_assigned").(int)))})
+	entitlements.SetManagedGatewaySmall(org.AssignedReassignedEntitlement{
+		Assigned:   int32Ptr(int32(d.Get("entitlements_managed_gateway_small").(int))),
+		Reassigned: int32Ptr(int32(d.Get("entitlements_managed_gateway_small_reassigned").(int))),
+	})
+	entitlements.SetManagedGatewayLarge(org.AssignedReassignedEntitlement{
+		Assigned:   int32Ptr(int32(d.Get("entitlements_managed_gateway_large").(int))),
+		Reassigned: int32Ptr(int32(d.Get("entitlements_managed_gateway_large_reassigned").(int))),
+	})
+
 	return entitlements
 }
+
+func boolPtr(v bool) *bool    { return &v }
+func int32Ptr(v int32) *int32 { return &v }
 
 /*
  * Returns authentication context (includes authorization header)
