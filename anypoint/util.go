@@ -166,11 +166,30 @@ func FilterStrList(list []string, filter func(string) bool) []string {
 // compares diffing for optional values, if the new value is equal to the initial value (that is the default value)
 // returns true if the attribute has the same value as the initial or if the new and old value are the same which needs no updaten false otherwise.
 func DiffSuppressFunc4OptionalPrimitives(k, old, new string, d *schema.ResourceData, initial string) bool {
+	// If the attribute is not set in the configuration, keep whatever value the
+	// API already has instead of forcing it back to the schema default. This
+	// mirrors the create/update bodies (e.g. newEntitlementsFromD), which only
+	// send attributes the user explicitly configured, and avoids a permanent
+	// diff when the server-side value differs from the schema default.
+	if isUnconfiguredAttr(k, d) {
+		return true
+	}
 	if len(old) == 0 && new == initial {
 		return true
 	} else {
 		return old == new
 	}
+}
+
+// isUnconfiguredAttr reports whether the top-level attribute k is absent (null)
+// in the raw configuration. It is safe during import/refresh, where the raw
+// config is null: in that case it returns false so the normal diff logic runs.
+func isUnconfiguredAttr(k string, d *schema.ResourceData) bool {
+	raw := d.GetRawConfig()
+	if raw.IsNull() || !raw.Type().IsObjectType() || !raw.Type().HasAttribute(k) {
+		return false
+	}
+	return raw.GetAttr(k).IsNull()
 }
 
 // Compares string lists

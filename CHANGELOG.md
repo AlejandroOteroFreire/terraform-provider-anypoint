@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (nothing yet)
 
+## [2.0.6] — 2026-07-02
+
+### Fixed
+- `anypoint_bg` (and any resource using `DiffSuppressFunc4OptionalPrimitives`):
+  no longer produces a permanent diff that resets a server-managed entitlement
+  back to its schema default when the attribute is not set in configuration.
+  The diff-suppress helper now treats an attribute that is absent from the raw
+  configuration as "keep the current API value", mirroring the create/update
+  bodies which only send explicitly-configured entitlements. Previously, e.g.
+  `entitlements_mqmessages_base` / `entitlements_mqrequests_base` would show a
+  perpetual change on a sub-org whose real quota differed from the schema
+  default. The raw-config check is import/refresh-safe (falls back to the prior
+  behavior when no configuration is present).
+
 ## [2.0.5] — 2026-07-02
 
 ### Fixed
