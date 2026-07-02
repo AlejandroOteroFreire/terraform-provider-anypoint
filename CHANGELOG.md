@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (nothing yet)
 
+## [2.0.5] — 2026-07-02
+
+### Fixed
+- `anypoint_bg`: business-group create/update no longer fails with
+  "Can not enable entitlement on a business group. It can only be set for a
+  master organization". v2.0.4 sent every entitlement unconditionally via
+  `d.Get()`, so the master-org-only boolean feature flags (several of which
+  default to `true` in the schema — `mqadvancedfeatures`, `designcenter_api/mozart`,
+  `runtimefabric`, `runtimefabriccloud`, `anypointsecuritytokenization`,
+  `anypointsecurityedgepolicies`) were always included in the request body and
+  rejected by the Access Management API. These boolean feature entitlements are
+  now only sent when explicitly set in the configuration (read via
+  `d.GetRawConfig()` so the schema default no longer leaks through). Quota /
+  quantitative entitlements (vCores, VPCs, gateways, MQ, object store, partners,
+  managed gateways, etc.) are still sent and remain assignable on a sub-org.
+
 ## [2.0.4] — 2026-07-01
 
 ### Changed

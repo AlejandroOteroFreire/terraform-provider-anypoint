@@ -5,6 +5,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -998,83 +999,191 @@ func newEntitlementsFromD(d *schema.ResourceData) *org.EntitlementsCore {
 	entitlements.SetVpcs(*vpcs)
 	entitlements.SetVpns(*vpns)
 
-	// The remaining entitlements below are all backed by the org.Entitlements struct now
-	// (internal/clients/org), which - unlike the external anypoint-client-go/org module it
-	// replaces - models every field the real Access Management API actually accepts on
-	// create/update. Previously these were declared Optional in the schema but silently
-	// never sent, because the old SDK's EntitlementsCore only supported the 10 fields above.
-	entitlements.SetWorkerLoggingOverride(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_workerloggingoverride_enabled").(bool))})
-	entitlements.SetMqMessages(org.BaseAddOnEntitlement{
-		Base:  int32Ptr(int32(d.Get("entitlements_mqmessages_base").(int))),
-		AddOn: int32Ptr(int32(d.Get("entitlements_mqmessages_addon").(int))),
-	})
-	entitlements.SetMqRequests(org.BaseAddOnEntitlement{
-		Base:  int32Ptr(int32(d.Get("entitlements_mqrequests_base").(int))),
-		AddOn: int32Ptr(int32(d.Get("entitlements_mqrequests_addon").(int))),
-	})
-	entitlements.SetObjectStoreRequestUnits(org.BaseAddOnEntitlement{
-		Base:  int32Ptr(int32(d.Get("entitlements_objectstorerequestunits_base").(int))),
-		AddOn: int32Ptr(int32(d.Get("entitlements_objectstorerequestunits_addon").(int))),
-	})
-	entitlements.SetObjectStoreKeys(org.BaseAddOnEntitlement{
-		Base:  int32Ptr(int32(d.Get("entitlements_objectstorekeys_base").(int))),
-		AddOn: int32Ptr(int32(d.Get("entitlements_objectstorekeys_addon").(int))),
-	})
-	entitlements.SetMqAdvancedFeatures(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_mqadvancedfeatures_enabled").(bool))})
-	entitlements.SetGateways(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_gateways_assigned").(int)))})
-	entitlements.SetDesignCenter(org.DesignCenterEntitlement{
-		Api:    boolPtr(d.Get("entitlements_designcenter_api").(bool)),
-		Mozart: boolPtr(d.Get("entitlements_designcenter_mozart").(bool)),
-	})
-	entitlements.SetPartnersProduction(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_partnersproduction_assigned").(int)))})
-	entitlements.SetPartnersSandbox(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_partnerssandbox_assigned").(int)))})
-	entitlements.SetTradingPartnersProduction(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_tradingpartnersproduction_assigned").(int)))})
-	entitlements.SetTradingPartnersSandbox(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_tradingpartnerssandbox_assigned").(int)))})
-	entitlements.SetExternalIdentity(d.Get("entitlements_externalidentity").(bool))
-	entitlements.SetAutoscaling(d.Get("entitlements_autoscaling").(bool))
-	entitlements.SetArmAlerts(d.Get("entitlements_armalerts").(bool))
-	entitlements.SetApis(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_apis_enabled").(bool))})
-	entitlements.SetApiMonitoring(org.ApiMonitoringEntitlement{Schedules: int32Ptr(int32(d.Get("entitlements_apimonitoring_schedules").(int)))})
-	entitlements.SetApiCommunityManager(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_apicommunitymanager_enabled").(bool))})
-	entitlements.SetMonitoringCenter(org.MonitoringCenterEntitlement{ProductSKU: int32Ptr(int32(d.Get("entitlements_monitoringcenter_productsku").(int)))})
-	entitlements.SetApiQuery(org.ApiQueryEntitlement{
-		Enabled:    boolPtr(d.Get("entitlements_apiquery_enabled").(bool)),
-		ProductSKU: int32Ptr(int32(d.Get("entitlements_apiquery_productsku").(int))),
-	})
-	entitlements.SetApiQueryC360(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_apiqueryc360_enabled").(bool))})
-	entitlements.SetAngGovernance(org.AngGovernanceEntitlement{Level: int32Ptr(int32(d.Get("entitlements_anggovernance_level").(int)))})
-	entitlements.SetCrowd(org.CrowdEntitlement{
-		HideApiManagerDesigner: boolPtr(d.Get("entitlements_crowd_hideapimanagerdesigner").(bool)),
-		HideFormerApiPlatform:  boolPtr(d.Get("entitlements_crowd_hideformerapiplatform").(bool)),
-		Environments:           boolPtr(d.Get("entitlements_crowd_environments").(bool)),
-	})
-	entitlements.SetCam(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_cam_enabled").(bool))})
-	entitlements.SetExchange2(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_exchange2_enabled").(bool))})
-	entitlements.SetCrowdSelfServiceMigration(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_crowdselfservicemigration_enabled").(bool))})
-	entitlements.SetKpiDashboard(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_kpidashboard_enabled").(bool))})
-	entitlements.SetPcf(d.Get("entitlements_pcf").(bool))
-	entitlements.SetAppViz(d.Get("entitlements_appviz").(bool))
-	entitlements.SetRuntimeFabric(d.Get("entitlements_runtimefabric").(bool))
-	entitlements.SetAnypointSecurityTokenization(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_anypointsecuritytokenization_enabled").(bool))})
-	entitlements.SetAnypointSecurityEdgePolicies(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_anypointsecurityedgepolicies_enabled").(bool))})
-	entitlements.SetRuntimeFabricCloud(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_runtimefabriccloud_enabled").(bool))})
-	entitlements.SetServiceMesh(org.EnabledEntitlement{Enabled: boolPtr(d.Get("entitlements_servicemesh_enabled").(bool))})
-	entitlements.SetMessaging(org.AssignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_messaging_assigned").(int)))})
-	entitlements.SetWorkerClouds(org.AssignedReassignedEntitlement{Assigned: int32Ptr(int32(d.Get("entitlements_workerclouds_assigned").(int)))})
-	entitlements.SetManagedGatewaySmall(org.AssignedReassignedEntitlement{
-		Assigned:   int32Ptr(int32(d.Get("entitlements_managed_gateway_small").(int))),
-		Reassigned: int32Ptr(int32(d.Get("entitlements_managed_gateway_small_reassigned").(int))),
-	})
-	entitlements.SetManagedGatewayLarge(org.AssignedReassignedEntitlement{
-		Assigned:   int32Ptr(int32(d.Get("entitlements_managed_gateway_large").(int))),
-		Reassigned: int32Ptr(int32(d.Get("entitlements_managed_gateway_large_reassigned").(int))),
-	})
+	// Everything below is only sent when the user explicitly set it in the
+	// configuration. These entitlements were declared Optional in the schema but
+	// silently never sent before v2.0.4 (the old external SDK's EntitlementsCore
+	// only modeled the 10 fields above). Several of them - both quota values like
+	// managed gateways and the boolean "feature enable" flags - are master-org-only:
+	// the Access Management API rejects setting them on a business group with
+	// "Can not enable entitlement on a business group. It can only be set for a
+	// master organization". We therefore read the raw config (not d.Get, which
+	// substitutes the schema/DiffSuppress default) so an unset attribute is omitted
+	// from the request body entirely (nil pointer -> omitempty).
+	raw := d.GetRawConfig()
+
+	// Quota / quantitative entitlements.
+	if base, addon := intConfigured(raw, "entitlements_mqmessages_base"), intConfigured(raw, "entitlements_mqmessages_addon"); base != nil || addon != nil {
+		entitlements.SetMqMessages(org.BaseAddOnEntitlement{Base: base, AddOn: addon})
+	}
+	if base, addon := intConfigured(raw, "entitlements_mqrequests_base"), intConfigured(raw, "entitlements_mqrequests_addon"); base != nil || addon != nil {
+		entitlements.SetMqRequests(org.BaseAddOnEntitlement{Base: base, AddOn: addon})
+	}
+	if base, addon := intConfigured(raw, "entitlements_objectstorerequestunits_base"), intConfigured(raw, "entitlements_objectstorerequestunits_addon"); base != nil || addon != nil {
+		entitlements.SetObjectStoreRequestUnits(org.BaseAddOnEntitlement{Base: base, AddOn: addon})
+	}
+	if base, addon := intConfigured(raw, "entitlements_objectstorekeys_base"), intConfigured(raw, "entitlements_objectstorekeys_addon"); base != nil || addon != nil {
+		entitlements.SetObjectStoreKeys(org.BaseAddOnEntitlement{Base: base, AddOn: addon})
+	}
+	if p := intConfigured(raw, "entitlements_gateways_assigned"); p != nil {
+		entitlements.SetGateways(org.AssignedEntitlement{Assigned: p})
+	}
+	if p := intConfigured(raw, "entitlements_partnersproduction_assigned"); p != nil {
+		entitlements.SetPartnersProduction(org.AssignedEntitlement{Assigned: p})
+	}
+	if p := intConfigured(raw, "entitlements_partnerssandbox_assigned"); p != nil {
+		entitlements.SetPartnersSandbox(org.AssignedEntitlement{Assigned: p})
+	}
+	if p := intConfigured(raw, "entitlements_tradingpartnersproduction_assigned"); p != nil {
+		entitlements.SetTradingPartnersProduction(org.AssignedEntitlement{Assigned: p})
+	}
+	if p := intConfigured(raw, "entitlements_tradingpartnerssandbox_assigned"); p != nil {
+		entitlements.SetTradingPartnersSandbox(org.AssignedEntitlement{Assigned: p})
+	}
+	if p := intConfigured(raw, "entitlements_apimonitoring_schedules"); p != nil {
+		entitlements.SetApiMonitoring(org.ApiMonitoringEntitlement{Schedules: p})
+	}
+	if p := intConfigured(raw, "entitlements_monitoringcenter_productsku"); p != nil {
+		entitlements.SetMonitoringCenter(org.MonitoringCenterEntitlement{ProductSKU: p})
+	}
+	if p := intConfigured(raw, "entitlements_anggovernance_level"); p != nil {
+		entitlements.SetAngGovernance(org.AngGovernanceEntitlement{Level: p})
+	}
+	if p := intConfigured(raw, "entitlements_messaging_assigned"); p != nil {
+		entitlements.SetMessaging(org.AssignedEntitlement{Assigned: p})
+	}
+
+	// Master-org-only boolean "feature enable" entitlements (see note above).
+	if p := boolConfigured(raw, "entitlements_workerloggingoverride_enabled"); p != nil {
+		entitlements.SetWorkerLoggingOverride(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_mqadvancedfeatures_enabled"); p != nil {
+		entitlements.SetMqAdvancedFeatures(org.EnabledEntitlement{Enabled: p})
+	}
+	if api, mozart := boolConfigured(raw, "entitlements_designcenter_api"), boolConfigured(raw, "entitlements_designcenter_mozart"); api != nil || mozart != nil {
+		entitlements.SetDesignCenter(org.DesignCenterEntitlement{Api: api, Mozart: mozart})
+	}
+	if p := boolConfigured(raw, "entitlements_externalidentity"); p != nil {
+		entitlements.SetExternalIdentity(*p)
+	}
+	if p := boolConfigured(raw, "entitlements_autoscaling"); p != nil {
+		entitlements.SetAutoscaling(*p)
+	}
+	if p := boolConfigured(raw, "entitlements_armalerts"); p != nil {
+		entitlements.SetArmAlerts(*p)
+	}
+	if p := boolConfigured(raw, "entitlements_apis_enabled"); p != nil {
+		entitlements.SetApis(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_apicommunitymanager_enabled"); p != nil {
+		entitlements.SetApiCommunityManager(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_apiquery_enabled"); p != nil {
+		entitlements.SetApiQuery(org.ApiQueryEntitlement{
+			Enabled:    p,
+			ProductSKU: int32Ptr(int32(d.Get("entitlements_apiquery_productsku").(int))),
+		})
+	}
+	if p := boolConfigured(raw, "entitlements_apiqueryc360_enabled"); p != nil {
+		entitlements.SetApiQueryC360(org.EnabledEntitlement{Enabled: p})
+	}
+	if h1, h2, env := boolConfigured(raw, "entitlements_crowd_hideapimanagerdesigner"), boolConfigured(raw, "entitlements_crowd_hideformerapiplatform"), boolConfigured(raw, "entitlements_crowd_environments"); h1 != nil || h2 != nil || env != nil {
+		entitlements.SetCrowd(org.CrowdEntitlement{
+			HideApiManagerDesigner: h1,
+			HideFormerApiPlatform:  h2,
+			Environments:           env,
+		})
+	}
+	if p := boolConfigured(raw, "entitlements_cam_enabled"); p != nil {
+		entitlements.SetCam(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_exchange2_enabled"); p != nil {
+		entitlements.SetExchange2(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_crowdselfservicemigration_enabled"); p != nil {
+		entitlements.SetCrowdSelfServiceMigration(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_kpidashboard_enabled"); p != nil {
+		entitlements.SetKpiDashboard(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_pcf"); p != nil {
+		entitlements.SetPcf(*p)
+	}
+	if p := boolConfigured(raw, "entitlements_appviz"); p != nil {
+		entitlements.SetAppViz(*p)
+	}
+	if p := boolConfigured(raw, "entitlements_runtimefabric"); p != nil {
+		entitlements.SetRuntimeFabric(*p)
+	}
+	if p := boolConfigured(raw, "entitlements_anypointsecuritytokenization_enabled"); p != nil {
+		entitlements.SetAnypointSecurityTokenization(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_anypointsecurityedgepolicies_enabled"); p != nil {
+		entitlements.SetAnypointSecurityEdgePolicies(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_runtimefabriccloud_enabled"); p != nil {
+		entitlements.SetRuntimeFabricCloud(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := boolConfigured(raw, "entitlements_servicemesh_enabled"); p != nil {
+		entitlements.SetServiceMesh(org.EnabledEntitlement{Enabled: p})
+	}
+	if p := intConfigured(raw, "entitlements_workerclouds_assigned"); p != nil {
+		entitlements.SetWorkerClouds(org.AssignedReassignedEntitlement{Assigned: p})
+	}
+	if p := intConfigured(raw, "entitlements_managed_gateway_small"); p != nil {
+		entitlements.SetManagedGatewaySmall(org.AssignedReassignedEntitlement{
+			Assigned:   p,
+			Reassigned: int32Ptr(int32(d.Get("entitlements_managed_gateway_small_reassigned").(int))),
+		})
+	}
+	if p := intConfigured(raw, "entitlements_managed_gateway_large"); p != nil {
+		entitlements.SetManagedGatewayLarge(org.AssignedReassignedEntitlement{
+			Assigned:   p,
+			Reassigned: int32Ptr(int32(d.Get("entitlements_managed_gateway_large_reassigned").(int))),
+		})
+	}
 
 	return entitlements
 }
 
 func boolPtr(v bool) *bool    { return &v }
 func int32Ptr(v int32) *int32 { return &v }
+
+// intConfigured returns a pointer to an integer attribute's value only when it
+// was explicitly set in the configuration. Like boolConfigured it reads the raw
+// config (not d.Get, which would substitute the schema Default / DiffSuppress
+// value), so an unset attribute yields nil and the caller can omit it from the
+// request body. Used to avoid assigning master-org-only quota entitlements on a
+// business group unless the user deliberately asked for them.
+func intConfigured(raw cty.Value, key string) *int32 {
+	if raw.IsNull() || !raw.Type().IsObjectType() || !raw.Type().HasAttribute(key) {
+		return nil
+	}
+	v := raw.GetAttr(key)
+	if v.IsNull() {
+		return nil
+	}
+	i, _ := v.AsBigFloat().Int64()
+	n := int32(i)
+	return &n
+}
+
+// boolConfigured returns a pointer to a bool attribute's value only when it was
+// explicitly set in the configuration. It reads the raw config (not d.Get,
+// which would substitute the schema Default), so an unset attribute yields nil
+// and the caller can omit it from the request body entirely. Used to avoid
+// sending master-org-only entitlements on a business group unless the user
+// deliberately asked for them.
+func boolConfigured(raw cty.Value, key string) *bool {
+	if raw.IsNull() || !raw.Type().IsObjectType() || !raw.Type().HasAttribute(key) {
+		return nil
+	}
+	v := raw.GetAttr(key)
+	if v.IsNull() {
+		return nil
+	}
+	b := v.True()
+	return &b
+}
 
 /*
  * Returns authentication context (includes authorization header)
