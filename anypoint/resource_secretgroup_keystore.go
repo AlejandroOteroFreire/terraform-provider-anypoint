@@ -242,7 +242,14 @@ func resourceSecretGroupKeystoreRead(ctx context.Context, d *schema.ResourceData
 	}
 	authctx := getSgKeystoreAuthCtx(ctx, &pco)
 	res, httpr, err := pco.sgkeystoreclient.DefaultApi.GetSecretGroupKeystoreDetails(authctx, orgid, envid, sgid, id).Execute()
-	if err != nil && httpr.StatusCode >= 400 {
+	if httpr != nil && httpr.StatusCode == 404 {
+		// The remote object was deleted outside of Terraform. Clear the ID so
+		// Terraform treats this resource as gone and plans to recreate it on
+		// the next apply, instead of erroring out and blocking the whole run.
+		d.SetId("")
+		return diags
+	}
+	if err != nil {
 		var details string
 		if httpr != nil && httpr.StatusCode >= 400 {
 			defer httpr.Body.Close()

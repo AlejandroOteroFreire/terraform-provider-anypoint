@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (nothing yet)
 
+## [2.0.7] — 2026-08-13
+
+### Fixed
+- Resources whose remote object is deleted outside of Terraform (directly in
+  Anypoint) no longer block `plan`/`apply` with a hard error. Their `Read`
+  functions now detect a 404 from the API, clear the resource ID
+  (`d.SetId("")`), and let Terraform treat it as gone — planning to recreate
+  it on the next apply, per standard Terraform drift-reconciliation behavior
+  — instead of erroring out and blocking the entire run. Fixed in:
+  `anypoint_bg`, `anypoint_env`, `anypoint_connected_app`,
+  `anypoint_private_space`, `anypoint_amq`, `anypoint_secretgroup` (and its
+  `_certificate`/`_truststore`/`_keystore`/`_tlscontext_mule`/
+  `_tlscontext_self_managed_omni_gateway`/`_tlscontext_securityfabric`
+  variants), `anypoint_fabrics`, `anypoint_fabrics_associations`,
+  `anypoint_team_roles`, `anypoint_team`, `anypoint_user`, and
+  `anypoint_team_member` (which previously searched a members list and
+  returned a hard error instead of clearing state when a membership was
+  removed externally).
+- `anypoint_secretgroup_keystore`: fixed a latent nil-pointer dereference in
+  `Read` (`httpr.StatusCode` was read before checking `httpr != nil`).
+
 ## [2.0.6] — 2026-07-02
 
 ### Fixed

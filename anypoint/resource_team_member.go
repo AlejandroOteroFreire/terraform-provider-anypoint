@@ -162,11 +162,11 @@ func resourceTeamMemberRead(ctx context.Context, d *schema.ResourceData, m any) 
 	//parse result
 	item := search4MemberByIdInSlice(res.GetData(), userid)
 	if item == nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Unable to find team member " + userid + " for team " + teamid,
-			Detail:   "Team Member Not Found",
-		})
+		// The membership was removed outside of Terraform (e.g. directly in
+		// Anypoint). Clear the ID so Terraform treats this resource as gone
+		// and plans to recreate it on the next apply, instead of erroring out
+		// and blocking the whole run.
+		d.SetId("")
 		return diags
 	}
 	teammember := flattenTeamMemberData(item)
